@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Django
+*.log
+*.sqlite3
+media/
+staticfiles/
+/backend/staticfiles/
+
+# Env / secrets
+.env
+*.env
+!.env.example
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+web/.env.local
+
+# Flutter
+mobile/.dart_tool/
+mobile/build/
+mobile/.flutter-plugins*
+mobile/**/GeneratedPluginRegistrant.*
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

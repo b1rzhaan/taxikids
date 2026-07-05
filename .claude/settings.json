@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker compose ps *)",
+      "Bash(docker compose logs *)",
+      "Bash(docker compose version)",
+      "Bash(docker version)",
+      "Bash(docker info)",
+      "Bash(flutter --version)",
+      "Bash(flutter doctor *)",
+      "mcp__Claude_Preview__preview_screenshot",
+      "mcp__Claude_Preview__preview_console_logs",
+      "mcp__Claude_Preview__preview_snapshot",
+      "mcp__Claude_Preview__preview_inspect",
+      "mcp__Claude_Preview__preview_logs",
+      "mcp__Claude_Preview__preview_network",
+      "mcp__Claude_Preview__preview_list",
+      "mcp__computer-use__screenshot",
+      "mcp__computer-use__wait",
+      "mcp__computer-use__zoom",
+      "mcp__computer-use__cursor_position"
+    ]
+  }
+}

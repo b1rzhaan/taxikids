@@ -1,0 +1,44 @@
+# Render Blueprint — deploys the KidsTransfer Django backend + Postgres.
+# Use it at https://dashboard.render.com/blueprints ("New Blueprint Instance").
+#
+# Redis is intentionally omitted (the app falls back to an in-process channel
+# layer, which is fine for a single web instance). Media (photos) go to
+# Cloudinary — set CLOUDINARY_URL in the dashboard after creating a free account.
+
+databases:
+  - name: kidstransfer-db
+    plan: free
+    databaseName: kidstransfer
+    user: kidstransfer
+
+services:
+  - type: web
+    name: kidstransfer-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: >-
+      pip install -r requirements.txt &&
+      python manage.py collectstatic --noinput &&
+      python manage.py migrate &&
+      python manage.py seed_demo --if-empty
+    startCommand: daphne -b 0.0.0.0 -p $PORT kidstransfer.asgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.6"
+      - key: DJANGO_DEBUG
+        value: "0"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_ALLOWED_HOSTS
+        value: ".onrender.com,localhost"
+      - key: CORS_ALLOW_ALL
+        value: "1"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kidstransfer-db
+          property: connectionString
+      # Set this manually in the dashboard from your Cloudinary account
+      # (Dashboard → API Environment variable: cloudinary://KEY:SECRET@CLOUD).
+      - key: CLOUDINARY_URL
+        sync: false

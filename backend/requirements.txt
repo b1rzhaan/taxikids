@@ -1,0 +1,21 @@
+Django==5.0.6
+djangorestframework==3.15.1
+djangorestframework-simplejwt==5.3.1
+django-cors-headers==4.3.1
+django-filter==24.2
+drf-spectacular==0.27.2
+psycopg[binary]==3.1.19
+channels==4.1.0
+channels-redis==4.2.0
+daphne==4.1.2
+celery==5.4.0
+redis==5.0.4
+requests==2.32.3
+python-dotenv==1.0.1
+Pillow==10.3.0
+
+# ── Production (Render) ──────────────────────────────────────────────
+dj-database-url==2.2.0          # parse Render's DATABASE_URL
+whitenoise==6.7.0               # serve static files (admin, DRF) from the app
+cloudinary==1.40.0              # persistent media storage (photos)
+django-cloudinary-storage==0.3.0

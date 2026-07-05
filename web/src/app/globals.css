@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-[#F4F5F7] text-ink antialiased;
+}
+
+.card {
+  @apply bg-white rounded-2xl shadow-soft border border-line;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5
+         font-semibold transition-colors duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
+}
+.btn-brand {
+  @apply btn bg-brand text-ink hover:bg-brand-dark;
+}
+.btn-ghost {
+  @apply btn bg-gray-100 text-ink hover:bg-gray-200;
+}
+
+.badge {
+  @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold;
+}
+
+.input {
+  @apply w-full rounded-xl border border-line px-3.5 py-2.5 outline-none
+         transition-colors focus:border-brand-dark focus:ring-2 focus:ring-brand/25;
+}
+
+/* Data tables */
+table.data {
+  @apply w-full text-sm border-separate border-spacing-0;
+}
+table.data th {
+  @apply text-left font-semibold text-muted px-4 py-3 border-b border-line
+         text-xs uppercase tracking-wide;
+}
+table.data td {
+  @apply px-4 py-3.5 border-b border-line/70 align-middle;
+}
+table.data tbody tr {
+  @apply transition-colors duration-150 hover:bg-brand-soft/40;
+}
+table.data tbody tr:last-child td {
+  @apply border-b-0;
+}
+
+/* Live taxis glide between polling updates instead of jumping. */
+.taxi-marker {
+  transition: transform 2.2s linear;
+}
