@@ -288,6 +288,13 @@ class PaymentsService {
     return data['status'] as String;
   }
 
+  /// Confirm a Stripe Checkout Session after the hosted page returns.
+  static Future<String> stripeConfirm(String sessionId) async {
+    final data =
+        await _api.post('/payments/stripe/confirm/', {'session_id': sessionId});
+    return data['status'] as String;
+  }
+
   /// Choose cash: the order becomes assignable now; the driver collects the
   /// fare at the end of the ride. Returns the updated trip.
   static Future<Trip> payCash(int tripId) async {

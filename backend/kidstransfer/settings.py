@@ -244,7 +244,7 @@ TWOGIS_API_KEY = os.getenv("TWOGIS_API_KEY", "")
 TWOGIS_BASE_URL = os.getenv("TWOGIS_BASE_URL", "https://routing.api.2gis.com")
 TWOGIS_CATALOG_URL = os.getenv("TWOGIS_CATALOG_URL", "https://catalog.api.2gis.com")
 
-PAYMENT_PROVIDER = os.getenv("PAYMENT_PROVIDER", "mock")  # mock | halyk
+PAYMENT_PROVIDER = os.getenv("PAYMENT_PROVIDER", "mock")  # mock | halyk | stripe
 PAYMENT_WEBHOOK_SECRET = os.getenv("PAYMENT_WEBHOOK_SECRET", "mock-webhook-secret")
 
 # ── Halyk Bank ePay (Kazakhstan acquiring) ────────────────────────────
@@ -265,6 +265,22 @@ HALYK_TERMINAL = os.getenv(
 # Marker URLs the mobile WebView watches to detect success / failure.
 HALYK_BACK_LINK = os.getenv("HALYK_BACK_LINK", "https://kidstransfer.success/")
 HALYK_FAILURE_LINK = os.getenv("HALYK_FAILURE_LINK", "https://kidstransfer.fail/")
+
+# Stripe Checkout (test/demo mode). Stripe is not currently a direct acquiring
+# option for Kazakhstan-based merchants, but it is useful for demo card flows
+# while the local bank/ioka/Kaspi contract is being prepared.
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+STRIPE_CURRENCY = os.getenv("STRIPE_CURRENCY", "usd").lower()
+STRIPE_DEMO_KZT_TO_TARGET_RATE = os.getenv("STRIPE_DEMO_KZT_TO_TARGET_RATE", "500")
+STRIPE_SUCCESS_URL = os.getenv(
+    "STRIPE_SUCCESS_URL",
+    "https://kidstransfer.success/stripe?session_id={CHECKOUT_SESSION_ID}",
+)
+STRIPE_CANCEL_URL = os.getenv(
+    "STRIPE_CANCEL_URL",
+    "https://kidstransfer.fail/stripe",
+)
 
 # ── Business rules ────────────────────────────────────────────────────
 DRIVER_REVENUE_SHARE = float(os.getenv("DRIVER_REVENUE_SHARE", "0.70"))

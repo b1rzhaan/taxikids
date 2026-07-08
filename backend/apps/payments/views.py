@@ -129,11 +129,30 @@ class HalykConfirmView(APIView):
         if not invoice_id:
             raise ValidationError({"detail": "invoice_id required"})
         prov = get_payment_provider()
-        verified = "success"
+        verified = "pending"
         if hasattr(prov, "verify_status"):
             s = prov.verify_status(str(invoice_id))
-            verified = "failed" if s == "failed" else "success"
+            verified = s if s in ("success", "failed", "pending") else "pending"
         payment = confirm_payment(str(invoice_id), verified)
+        if payment is None:
+            return Response({"detail": "unknown payment"}, status=404)
+        return Response({"status": payment.status})
+
+
+class StripeConfirmView(APIView):
+    """Client-side return from Stripe Checkout -> verify + mark trip paid."""
+
+    permission_classes = [IsParent]
+
+    def post(self, request):
+        session_id = request.data.get("session_id")
+        if not session_id:
+            raise ValidationError({"detail": "session_id required"})
+        prov = get_payment_provider()
+        if not hasattr(prov, "verify_status"):
+            raise ValidationError({"detail": "Stripe provider is not enabled"})
+        verified = prov.verify_status(str(session_id))
+        payment = confirm_payment(str(session_id), verified)
         if payment is None:
             return Response({"detail": "unknown payment"}, status=404)
         return Response({"status": payment.status})

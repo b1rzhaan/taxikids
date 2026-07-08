@@ -5,6 +5,7 @@ import '../../core/theme.dart';
 import '../../models/models.dart';
 import '../../services/services.dart';
 import 'halyk_checkout_screen.dart';
+import 'hosted_checkout_screen.dart';
 
 class PayScreen extends StatefulWidget {
   final Trip trip;
@@ -66,6 +67,30 @@ class _PayScreenState extends State<PayScreen> {
           setState(() => _paid = true);
         } else {
           setState(() => _error = 'Оплата не завершена');
+        }
+      } else if (provider == 'stripe' && '${res['redirect_url']}'.isNotEmpty) {
+        // Stripe Checkout in test/demo mode. Production Kazakhstan acquiring can
+        // later be switched to Halyk/ioka/Kaspi via the same backend provider.
+        if (!mounted) return;
+        final meta = Map<String, dynamic>.from(res['payment_object'] ?? {});
+        final sessionId = '${res['provider_ref']}';
+        final ok = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => HostedCheckoutScreen(
+              title: 'Stripe test checkout',
+              pageUrl: '${res['redirect_url']}',
+              successPrefix: '${meta['success_prefix']}',
+              failPrefix: '${meta['cancel_prefix']}',
+              onSuccess: () async =>
+                  (await PaymentsService.stripeConfirm(sessionId)) == 'success',
+            ),
+          ),
+        );
+        if (ok == true) {
+          setState(() => _paid = true);
+        } else {
+          setState(() => _error = 'Stripe checkout was not completed');
         }
       } else {
         // Mock provider: emulate the hosted checkout succeeding.

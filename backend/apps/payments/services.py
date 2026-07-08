@@ -24,6 +24,10 @@ def get_payment_provider() -> PaymentProvider:
         from .providers.halyk import HalykProvider
 
         return HalykProvider()
+    if provider == "stripe":
+        from .providers.stripe import StripeProvider
+
+        return StripeProvider()
     return MockPaymentProvider()
 
 
@@ -68,6 +72,10 @@ def confirm_payment(provider_ref: str, event_status: str, raw: dict | None = Non
         return None
     if payment.status in (Payment.Status.SUCCESS, Payment.Status.REFUNDED):
         return payment  # already processed
+    if event_status == "pending":
+        payment.raw_payload = raw or payment.raw_payload
+        payment.save(update_fields=["raw_payload"])
+        return payment
 
     payment.raw_payload = raw or {}
     if event_status == "success":
