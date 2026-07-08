@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/api_client.dart';
 import '../../core/theme.dart';
 import '../../state/auth_state.dart';
+import '../../widgets/ui.dart';
 import 'driver_register_screen.dart';
 import 'parent_register_screen.dart';
 
@@ -50,14 +51,44 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(22),
-                  child: Image.asset('assets/logo.png',
-                      height: 84, width: 84, fit: BoxFit.cover),
+                  child: Image.asset(
+                    'assets/logo.png',
+                    height: 84,
+                    width: 84,
+                    fit: BoxFit.cover,
+                  ),
                 ),
                 const SizedBox(height: 12),
-                const Text('Детское такси',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
-                const Text('Безопасные поездки для детей',
-                    style: TextStyle(color: AppColors.muted)),
+                const Text(
+                  'Детское такси',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
+                ),
+                const Text(
+                  'Безопасные поездки для детей',
+                  style: TextStyle(color: AppColors.muted),
+                ),
+                const SizedBox(height: 14),
+                const Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    TrustPill(
+                      icon: Icons.verified_user_outlined,
+                      label: 'Проверка',
+                    ),
+                    TrustPill(
+                      icon: Icons.location_on_outlined,
+                      label: 'GPS',
+                      color: Color(0xFF4C8DFF),
+                    ),
+                    TrustPill(
+                      icon: Icons.support_agent_outlined,
+                      label: 'Оператор',
+                      color: Color(0xFF35C759),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 28),
                 Card(
                   child: Padding(
@@ -68,19 +99,21 @@ class _LoginScreenState extends State<LoginScreen> {
                           controller: _email,
                           keyboardType: TextInputType.emailAddress,
                           decoration: const InputDecoration(
-                              labelText: 'Email', hintText: 'parent@kids.kz'),
+                            labelText: 'Email',
+                            hintText: 'parent@kids.kz',
+                          ),
                         ),
                         const SizedBox(height: 14),
                         TextField(
                           controller: _password,
                           obscureText: true,
-                          decoration:
-                              const InputDecoration(labelText: 'Пароль'),
+                          decoration: const InputDecoration(
+                            labelText: 'Пароль',
+                          ),
                         ),
                         if (_error != null) ...[
                           const SizedBox(height: 12),
-                          Text(_error!,
-                              style: const TextStyle(color: AppColors.danger)),
+                          InlineError(_error!),
                         ],
                         const SizedBox(height: 18),
                         SizedBox(
@@ -92,7 +125,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                     height: 20,
                                     width: 20,
                                     child: CircularProgressIndicator(
-                                        strokeWidth: 2, color: AppColors.ink),
+                                      strokeWidth: 2,
+                                      color: AppColors.ink,
+                                    ),
                                   )
                                 : const Text('Войти'),
                           ),
@@ -102,8 +137,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text('Демо-доступы:',
-                    style: TextStyle(color: AppColors.muted, fontSize: 12)),
+                const Text(
+                  'Демо-доступы:',
+                  style: TextStyle(color: AppColors.muted, fontSize: 12),
+                ),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -115,32 +152,40 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 24),
                 Divider(color: AppColors.line),
                 const SizedBox(height: 12),
-                const Text('Нет аккаунта? Зарегистрируйтесь',
-                    style: TextStyle(color: AppColors.muted, fontSize: 13)),
+                const Text(
+                  'Нет аккаунта? Зарегистрируйтесь',
+                  style: TextStyle(color: AppColors.muted, fontSize: 13),
+                ),
                 const SizedBox(height: 10),
-                Row(children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => Navigator.push(
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (_) => const ParentRegisterScreen())),
-                      icon: const Icon(Icons.family_restroom, size: 18),
-                      label: const Text('Я родитель'),
+                            builder: (_) => const ParentRegisterScreen(),
+                          ),
+                        ),
+                        icon: const Icon(Icons.family_restroom, size: 18),
+                        label: const Text('Я родитель'),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => Navigator.push(
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (_) => const DriverRegisterScreen())),
-                      icon: const Icon(Icons.local_taxi, size: 18),
-                      label: const Text('Я водитель'),
+                            builder: (_) => const DriverRegisterScreen(),
+                          ),
+                        ),
+                        icon: const Icon(Icons.local_taxi, size: 18),
+                        label: const Text('Я водитель'),
+                      ),
                     ),
-                  ),
-                ]),
+                  ],
+                ),
               ],
             ),
           ),
@@ -150,9 +195,9 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _demoChip(String label, String email, String pwd) => ActionChip(
-        backgroundColor: AppColors.brandSoft,
-        side: BorderSide.none,
-        label: Text(label),
-        onPressed: () => _demo(email, pwd),
-      );
+    backgroundColor: AppColors.brandSoft,
+    side: BorderSide.none,
+    label: Text(label),
+    onPressed: () => _demo(email, pwd),
+  );
 }

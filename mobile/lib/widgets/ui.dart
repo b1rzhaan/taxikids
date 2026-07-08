@@ -15,16 +15,21 @@ class SectionHeader extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title,
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+        Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+        ),
         if (action != null)
           GestureDetector(
             onTap: onAction,
-            child: Text(action!,
-                style: const TextStyle(
-                    color: AppColors.brand,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13)),
+            child: Text(
+              action!,
+              style: const TextStyle(
+                color: AppColors.brand,
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+              ),
+            ),
           ),
       ],
     );
@@ -49,6 +54,148 @@ class SoftIcon extends StatelessWidget {
         borderRadius: BorderRadius.circular(size * 0.3),
       ),
       child: Icon(icon, color: fg ?? AppColors.brand, size: size * 0.5),
+    );
+  }
+}
+
+/// Compact trust marker used in auth and parent flows.
+class TrustPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const TrustPill({
+    super.key,
+    required this.icon,
+    required this.label,
+    this.color = AppColors.brand,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 34),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.24)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 15),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                height: 1.1,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Stable square action tile for dense mobile dashboards.
+class QuickActionTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const QuickActionTile({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 102,
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.line),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SoftIcon(
+              icon,
+              bg: AppColors.brand.withValues(alpha: 0.14),
+              size: 42,
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 30,
+              child: Center(
+                child: Text(
+                  label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    height: 1.25,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Consistent inline error block, calmer than a loose red paragraph.
+class InlineError extends StatelessWidget {
+  final String message;
+
+  const InlineError(this.message, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.danger.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.danger.withValues(alpha: 0.28)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.wifi_off_rounded, color: AppColors.danger, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: AppColors.ink,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -91,20 +238,32 @@ class EmptyState extends StatelessWidget {
             child: Icon(icon, color: AppColors.brand, size: 30),
           ),
           const SizedBox(height: 14),
-          Text(title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+          ),
           if (subtitle != null) ...[
             const SizedBox(height: 6),
-            Text(subtitle!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.muted, fontSize: 13)),
+            Text(
+              subtitle!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.muted, fontSize: 13),
+            ),
           ],
           if (actionLabel != null) ...[
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(onPressed: onAction, child: Text(actionLabel!)),
+              height: 54,
+              child: ElevatedButton(
+                onPressed: onAction,
+                child: Text(
+                  actionLabel!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ),
           ],
         ],
@@ -126,12 +285,15 @@ class PlateBadge extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Text(plate,
-          style: const TextStyle(
-              color: Color(0xFF141414),
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.2,
-              fontSize: 13)),
+      child: Text(
+        plate,
+        style: const TextStyle(
+          color: Color(0xFF141414),
+          fontWeight: FontWeight.w800,
+          letterSpacing: 1.2,
+          fontSize: 13,
+        ),
+      ),
     );
   }
 }
@@ -142,8 +304,12 @@ class StatPill extends StatelessWidget {
   final IconData icon;
   final String value;
   final String label;
-  const StatPill(
-      {super.key, required this.icon, required this.value, required this.label});
+  const StatPill({
+    super.key,
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -162,11 +328,18 @@ class StatPill extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(value,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w800, fontSize: 13, height: 1.1)),
-              Text(label,
-                  style: const TextStyle(color: AppColors.muted, fontSize: 11)),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                  height: 1.1,
+                ),
+              ),
+              Text(
+                label,
+                style: const TextStyle(color: AppColors.muted, fontSize: 11),
+              ),
             ],
           ),
         ],

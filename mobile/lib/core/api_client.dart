@@ -6,37 +6,41 @@ import 'config.dart';
 /// Thin Dio wrapper: injects the JWT, refreshes it transparently on 401.
 class ApiClient {
   ApiClient._() {
-    _dio = Dio(BaseOptions(
-      baseUrl: AppConfig.apiBase,
-      connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: const Duration(seconds: 20),
-      headers: {'Content-Type': 'application/json'},
-    ));
-    _dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) {
-        final token = _session?.access;
-        if (token != null) {
-          options.headers['Authorization'] = 'Bearer $token';
-        }
-        handler.next(options);
-      },
-      onError: (e, handler) async {
-        if (e.response?.statusCode == 401 && _session?.refresh != null) {
-          final ok = await _refresh();
-          if (ok) {
-            final req = e.requestOptions;
-            req.headers['Authorization'] = 'Bearer ${_session!.access}';
-            try {
-              final clone = await _dio.fetch(req);
-              return handler.resolve(clone);
-            } catch (err) {
-              return handler.next(e);
+    _dio = Dio(
+      BaseOptions(
+        baseUrl: AppConfig.apiBase,
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 20),
+        headers: {'Content-Type': 'application/json'},
+      ),
+    );
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          final token = _session?.access;
+          if (token != null) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+          handler.next(options);
+        },
+        onError: (e, handler) async {
+          if (e.response?.statusCode == 401 && _session?.refresh != null) {
+            final ok = await _refresh();
+            if (ok) {
+              final req = e.requestOptions;
+              req.headers['Authorization'] = 'Bearer ${_session!.access}';
+              try {
+                final clone = await _dio.fetch(req);
+                return handler.resolve(clone);
+              } catch (err) {
+                return handler.next(e);
+              }
             }
           }
-        }
-        handler.next(e);
-      },
-    ));
+          handler.next(e);
+        },
+      ),
+    );
   }
 
   static final ApiClient instance = ApiClient._();
@@ -89,8 +93,7 @@ class ApiClient {
         DioExceptionType.unknown,
       };
       if (connErrors.contains(e.type)) {
-        return 'Нет связи с сервером ($apiBaseHint). '
-            'Проверьте, что backend запущен.';
+        return 'Не удалось подключиться к серверу. Проверьте интернет и попробуйте ещё раз.';
       }
       // Django rejects an unknown Host (DisallowedHost) with a 400 HTML page.
       if (e.response?.statusCode == 400) {
@@ -101,5 +104,5 @@ class ApiClient {
     return 'Что-то пошло не так';
   }
 
-  static const apiBaseHint = 'напр. 10.0.2.2:8000 на Android-эмуляторе';
+  static String get apiBaseHint => AppConfig.apiBase;
 }

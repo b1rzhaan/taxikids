@@ -54,7 +54,9 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
 
   Future<void> _order() async {
     final created = await Navigator.push(
-        context, MaterialPageRoute(builder: (_) => const CreateTripScreen()));
+      context,
+      MaterialPageRoute(builder: (_) => const CreateTripScreen()),
+    );
     if (created != null) _load();
   }
 
@@ -73,7 +75,9 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
     return Scaffold(
       body: SafeArea(
         child: _loading
-            ? const Center(child: CircularProgressIndicator(color: AppColors.brand))
+            ? const Center(
+                child: CircularProgressIndicator(color: AppColors.brand),
+              )
             : RefreshIndicator(
                 onRefresh: _load,
                 child: ListView(
@@ -89,17 +93,33 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                       _currentTrip(active.first),
                       const SizedBox(height: 24),
                     ],
-                    SectionHeader('Мои дети', action: 'Все', onAction: () {
-                      Navigator.push(context,
-                          MaterialPageRoute(builder: (_) => const ChildrenScreen()));
-                    }),
+                    SectionHeader(
+                      'Мои дети',
+                      action: 'Все',
+                      onAction: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ChildrenScreen(),
+                          ),
+                        );
+                      },
+                    ),
                     const SizedBox(height: 10),
                     _childrenRow(),
                     const SizedBox(height: 24),
-                    SectionHeader('Сегодня', action: 'История', onAction: () {
-                      Navigator.push(context,
-                          MaterialPageRoute(builder: (_) => const HistoryScreen()));
-                    }),
+                    SectionHeader(
+                      'Сегодня',
+                      action: 'История',
+                      onAction: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const HistoryScreen(),
+                          ),
+                        );
+                      },
+                    ),
                     const SizedBox(height: 10),
                     if (today.isEmpty)
                       const EmptyState(
@@ -129,11 +149,17 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(_greeting,
-                  style: const TextStyle(color: AppColors.muted, fontSize: 13)),
-              Text(_name.isEmpty ? 'С возвращением 👋' : '$_name 👋',
-                  style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.w800)),
+              Text(
+                _greeting,
+                style: const TextStyle(color: AppColors.muted, fontSize: 13),
+              ),
+              Text(
+                _name.isEmpty ? 'С возвращением' : _name,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
             ],
           ),
         ),
@@ -147,13 +173,13 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
     return GestureDetector(
       onTap: _order,
       child: Container(
-        height: 168,
+        height: 196,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(26),
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF20232B), Color(0xFF15161B)],
+            colors: [Color(0xFF282513), Color(0xFF16191F)],
           ),
           border: Border.all(color: AppColors.brand.withValues(alpha: 0.35)),
         ),
@@ -163,7 +189,11 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
             Positioned(
               right: -6,
               bottom: 6,
-              child: Image.asset('assets/car.png', height: 116, fit: BoxFit.contain),
+              child: Image.asset(
+                'assets/car.png',
+                height: 116,
+                fit: BoxFit.contain,
+              ),
             ),
             Padding(
               padding: const EdgeInsets.all(20),
@@ -174,21 +204,48 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Куда везём\nсегодня?',
+                      const SizedBox(
+                        width: 210,
+                        child: Text(
+                          'Куда везём сегодня?',
                           style: TextStyle(
-                              fontSize: 22,
-                              height: 1.15,
-                              fontWeight: FontWeight.w800)),
+                            fontSize: 22,
+                            height: 1.15,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
                       const SizedBox(height: 6),
-                      Text('Безопасно доставим ребёнка',
-                          style: TextStyle(
-                              color: AppColors.muted.withValues(alpha: 0.9),
-                              fontSize: 13)),
+                      Text(
+                        'Безопасно доставим ребёнка',
+                        style: TextStyle(
+                          color: AppColors.muted.withValues(alpha: 0.9),
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      const Wrap(
+                        spacing: 7,
+                        runSpacing: 7,
+                        children: [
+                          TrustPill(
+                            icon: Icons.location_on_outlined,
+                            label: 'GPS',
+                            color: Color(0xFF4C8DFF),
+                          ),
+                          TrustPill(
+                            icon: Icons.verified_outlined,
+                            label: 'Проверка',
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 11,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.brand,
                       borderRadius: BorderRadius.circular(30),
@@ -196,13 +253,19 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('Заказать поездку',
-                            style: TextStyle(
-                                color: AppColors.onBrand,
-                                fontWeight: FontWeight.w800)),
+                        Text(
+                          'Заказать поездку',
+                          style: TextStyle(
+                            color: AppColors.onBrand,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
                         SizedBox(width: 6),
-                        Icon(Icons.arrow_forward,
-                            color: AppColors.onBrand, size: 18),
+                        Icon(
+                          Icons.arrow_forward,
+                          color: AppColors.onBrand,
+                          size: 18,
+                        ),
                       ],
                     ),
                   ),
@@ -223,8 +286,10 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
         subtitle: 'Укажите данные ребёнка, чтобы заказывать поездки.',
         actionLabel: '+ Добавить ребёнка',
         onAction: () async {
-          await Navigator.push(context,
-              MaterialPageRoute(builder: (_) => const ChildrenScreen()));
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ChildrenScreen()),
+          );
           _load();
         },
       );
@@ -254,17 +319,25 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(c.fullName,
+                      Text(
+                        c.fullName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                        ),
+                      ),
+                      if (c.school.isNotEmpty)
+                        Text(
+                          c.school,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 15)),
-                      if (c.school.isNotEmpty)
-                        Text(c.school,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                                color: AppColors.muted, fontSize: 12)),
+                            color: AppColors.muted,
+                            fontSize: 12,
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -288,22 +361,34 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-        onTap: () => Navigator.push(context,
-            MaterialPageRoute(builder: (_) => TripTrackingScreen(tripId: t.id))),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => TripTrackingScreen(tripId: t.id)),
+        ),
         leading: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
             color: AppColors.brand.withValues(alpha: 0.14),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Text(time,
-              style: const TextStyle(
-                  fontWeight: FontWeight.w800, fontSize: 14, color: AppColors.brand)),
+          child: Text(
+            time,
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 14,
+              color: AppColors.brand,
+            ),
+          ),
         ),
-        title: Text(t.childName ?? 'Поездка',
-            style: const TextStyle(fontWeight: FontWeight.w700)),
-        subtitle: Text('${t.pickupText} → ${t.dropoffText}',
-            maxLines: 1, overflow: TextOverflow.ellipsis),
+        title: Text(
+          t.childName ?? 'Поездка',
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        subtitle: Text(
+          '${t.pickupText} → ${t.dropoffText}',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         trailing: StatusChip(t.status),
       ),
     );
@@ -312,8 +397,10 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
   Widget _currentTrip(Trip t) {
     final eta = (t.routeDurationS / 60).round();
     return GestureDetector(
-      onTap: () => Navigator.push(context,
-          MaterialPageRoute(builder: (_) => TripTrackingScreen(tripId: t.id))),
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => TripTrackingScreen(tripId: t.id)),
+      ),
       child: PulseGlow(
         radius: 22,
         child: Container(
@@ -326,35 +413,51 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
           child: Row(
             children: [
               const CircleAvatar(
-                  radius: 24,
-                  backgroundColor: AppColors.brand,
-                  child: Icon(Icons.local_taxi, color: AppColors.onBrand)),
+                radius: 24,
+                backgroundColor: AppColors.brand,
+                child: Icon(Icons.local_taxi, color: AppColors.onBrand),
+              ),
               const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(t.childName ?? 'Ребёнок',
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      t.childName ?? 'Ребёнок',
                       style: const TextStyle(
-                          fontWeight: FontWeight.w800, fontSize: 15)),
-                  const SizedBox(height: 2),
-                  Text(statusInfo(t.status).label,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      statusInfo(t.status).label,
                       style: const TextStyle(
-                          color: AppColors.muted, fontSize: 13)),
-                ],
+                        color: AppColors.muted,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.brand,
-                borderRadius: BorderRadius.circular(30),
-              ),
-              child: Text('~$eta мин',
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.brand,
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: Text(
+                  '~$eta мин',
                   style: const TextStyle(
-                      color: AppColors.onBrand, fontWeight: FontWeight.w800)),
-            ),
-          ],
+                    color: AppColors.onBrand,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -364,50 +467,45 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
   Widget _quickActions() {
     final items = [
       (Icons.add_location_alt_outlined, 'Заказать\nпоездку', _order),
-      (Icons.event_note_outlined, 'Календарь\nпоездок', () {
-        Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const HistoryScreen()));
-      }),
-      (Icons.child_care_outlined, 'Мои\nдети', () {
-        Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const ChildrenScreen()));
-      }),
-      (Icons.support_agent_outlined, 'Помощь\n24/7', () {
-        Navigator.push(
+      (
+        Icons.event_note_outlined,
+        'Календарь\nпоездок',
+        () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const HistoryScreen()),
+          );
+        },
+      ),
+      (
+        Icons.child_care_outlined,
+        'Мои\nдети',
+        () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ChildrenScreen()),
+          );
+        },
+      ),
+      (
+        Icons.support_agent_outlined,
+        'Помощь\n24/7',
+        () {
+          Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (_) => const MessagesScreen(initialIndex: 1)));
-      }),
+              builder: (_) => const MessagesScreen(initialIndex: 1),
+            ),
+          );
+        },
+      ),
     ];
     return Row(
       children: items.map((it) {
         return Expanded(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: GestureDetector(
-              onTap: it.$3,
-              child: Container(
-                height: 96,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: AppColors.line),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SoftIcon(it.$1,
-                        bg: AppColors.brand.withValues(alpha: 0.14), size: 42),
-                    const SizedBox(height: 8),
-                    Text(it.$2,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                            fontSize: 11, fontWeight: FontWeight.w600, height: 1.2)),
-                  ],
-                ),
-              ),
-            ),
+            child: QuickActionTile(icon: it.$1, label: it.$2, onTap: it.$3),
           ),
         );
       }).toList(),
