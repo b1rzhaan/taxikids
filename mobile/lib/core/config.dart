@@ -14,6 +14,7 @@ class AppConfig {
   /// - Android emulator → 10.0.2.2 (host machine loopback)
   static String get apiBase {
     if (_envApi.isNotEmpty) return _envApi;
+    if (kReleaseMode) return 'https://kidstransfer-api.onrender.com/api';
     if (kIsWeb) return 'http://localhost:8000/api';
     try {
       if (Platform.isAndroid) return 'http://10.0.2.2:8000/api';
@@ -30,6 +31,7 @@ class AppConfig {
           .replaceFirst('http://', 'ws://')
           .replaceFirst(RegExp(r'/api/?$'), '');
     }
+    if (kReleaseMode) return 'wss://kidstransfer-api.onrender.com';
     if (kIsWeb) return 'ws://localhost:8000';
     try {
       if (Platform.isAndroid) return 'ws://10.0.2.2:8000';

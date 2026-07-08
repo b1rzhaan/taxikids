@@ -62,7 +62,8 @@ class _DgisWebNavigationScreenState extends State<DgisWebNavigationScreen> {
     _route = await _resolveRoute();
     try {
       final bytes = await rootBundle.load('assets/car.png');
-      _carIcon = 'data:image/png;base64,${base64Encode(bytes.buffer.asUint8List())}';
+      _carIcon =
+          'data:image/png;base64,${base64Encode(bytes.buffer.asUint8List())}';
     } catch (_) {}
     final controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
@@ -122,7 +123,9 @@ class _DgisWebNavigationScreenState extends State<DgisWebNavigationScreen> {
       }
       final p = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.high, timeLimit: Duration(seconds: 8)),
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 8),
+        ),
       );
       return (p.latitude, p.longitude);
     } catch (_) {
@@ -142,8 +145,11 @@ class _DgisWebNavigationScreenState extends State<DgisWebNavigationScreen> {
           _etaMin = (m['etaMin'] as num).toInt();
           _progress = (m['progress'] as num).toDouble().clamp(0, 1);
           setState(() {});
-          TripsService.sendLocation(widget.trip.id,
-              (m['lat'] as num).toDouble(), (m['lng'] as num).toDouble());
+          TripsService.sendLocation(
+            widget.trip.id,
+            (m['lat'] as num).toDouble(),
+            (m['lng'] as num).toDouble(),
+          );
           break;
         case 'voice':
           Speaker.say('${m['text']}');
@@ -196,7 +202,8 @@ class _DgisWebNavigationScreenState extends State<DgisWebNavigationScreen> {
               child: ColoredBox(
                 color: AppColors.bg,
                 child: Center(
-                    child: CircularProgressIndicator(color: AppColors.brand)),
+                  child: CircularProgressIndicator(color: AppColors.brand),
+                ),
               ),
             ),
           Positioned(
@@ -234,23 +241,33 @@ class _DgisWebNavigationScreenState extends State<DgisWebNavigationScreen> {
               width: 34,
               height: 34,
               decoration: BoxDecoration(
-                  color: Colors.white24, borderRadius: BorderRadius.circular(10)),
+                color: Colors.white24,
+                borderRadius: BorderRadius.circular(10),
+              ),
               child: const Icon(Icons.close, color: Colors.white, size: 20),
             ),
           ),
           const SizedBox(width: 10),
-          Icon(_arrived ? Icons.check_circle : Icons.navigation,
-              color: _arrived ? Colors.white : AppColors.brand, size: 26),
+          Icon(
+            _arrived ? Icons.check_circle : Icons.navigation,
+            color: _arrived ? Colors.white : AppColors.brand,
+            size: 26,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               _arrived
                   ? 'Вы на месте'
-                  : (widget.headingToPickup ? 'Едем к ребёнку' : 'Везём ребёнка'),
+                  : (widget.headingToPickup
+                        ? 'Едем к ребёнку'
+                        : 'Везём ребёнка'),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                  color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -262,10 +279,14 @@ class _DgisWebNavigationScreenState extends State<DgisWebNavigationScreen> {
                 width: 34,
                 height: 34,
                 decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(10)),
-                child: Icon(on ? Icons.volume_up : Icons.volume_off,
-                    color: Colors.white, size: 20),
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  on ? Icons.volume_up : Icons.volume_off,
+                  color: Colors.white,
+                  size: 20,
+                ),
               ),
             ),
           ),
@@ -294,10 +315,15 @@ class _DgisWebNavigationScreenState extends State<DgisWebNavigationScreen> {
                 const Icon(Icons.place, color: Color(0xFFF97316), size: 18),
                 const SizedBox(width: 6),
                 Expanded(
-                  child: Text(widget.targetText,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w600)),
+                  child: Text(
+                    widget.targetText,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFF111827),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -306,17 +332,30 @@ class _DgisWebNavigationScreenState extends State<DgisWebNavigationScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('${_remainingKm.toStringAsFixed(1)} км',
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.w800)),
-                Text(_arrived ? 'на месте' : '$_etaMin мин',
-                    style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.brandDark)),
-                Text(_arrivalClock,
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.w800)),
+                Text(
+                  '${_remainingKm.toStringAsFixed(1)} км',
+                  style: const TextStyle(
+                    color: Color(0xFF111827),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                Text(
+                  _arrived ? 'на месте' : '$_etaMin мин',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.brandDark,
+                  ),
+                ),
+                Text(
+                  _arrivalClock,
+                  style: const TextStyle(
+                    color: Color(0xFF111827),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 10),
@@ -332,7 +371,7 @@ class _DgisWebNavigationScreenState extends State<DgisWebNavigationScreen> {
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
-              height: 48,
+              height: 58,
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(context),
                 child: const Text('Свернуть навигатор'),
@@ -355,19 +394,25 @@ class _DgisWebNavigationScreenState extends State<DgisWebNavigationScreen> {
             children: [
               const Text('🗺️', style: TextStyle(fontSize: 40)),
               const SizedBox(height: 8),
-              const Text('Карта 2GIS недоступна',
-                  style: TextStyle(fontWeight: FontWeight.w700)),
+              const Text(
+                'Карта 2GIS недоступна',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
               const SizedBox(height: 4),
-              const Text('Не удалось получить ключ карты. Откроем простой навигатор.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.muted)),
+              const Text(
+                'Не удалось получить ключ карты. Откроем простой навигатор.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.muted),
+              ),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
                     builder: (_) => NavigationScreen(
-                        trip: widget.trip, targetText: widget.targetText),
+                      trip: widget.trip,
+                      targetText: widget.targetText,
+                    ),
                   ),
                 ),
                 child: const Text('Открыть навигатор'),

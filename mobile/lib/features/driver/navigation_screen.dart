@@ -15,7 +15,11 @@ import '../../widgets/trip_map.dart' show toLatLng;
 class NavigationScreen extends StatefulWidget {
   final Trip trip;
   final String targetText;
-  const NavigationScreen({super.key, required this.trip, required this.targetText});
+  const NavigationScreen({
+    super.key,
+    required this.trip,
+    required this.targetText,
+  });
 
   @override
   State<NavigationScreen> createState() => _NavigationScreenState();
@@ -35,7 +39,9 @@ class _NavigationScreenState extends State<NavigationScreen> {
     super.initState();
     _route = toLatLng(widget.trip.polyline);
     if (_route.length < 2) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => Navigator.pop(context));
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => Navigator.pop(context),
+      );
       return;
     }
     _timer = Timer.periodic(const Duration(milliseconds: 1100), (_) => _tick());
@@ -63,7 +69,10 @@ class _NavigationScreenState extends State<NavigationScreen> {
     _map.moveAndRotate(center, 17, -_heading);
     try {
       await TripsService.sendLocation(
-          widget.trip.id, _route[_i].latitude, _route[_i].longitude);
+        widget.trip.id,
+        _route[_i].latitude,
+        _route[_i].longitude,
+      );
     } catch (_) {}
   }
 
@@ -71,8 +80,11 @@ class _NavigationScreenState extends State<NavigationScreen> {
   double _bearing(LatLng a, LatLng b) {
     final dLon = _rad(b.longitude - a.longitude);
     final y = math.sin(dLon) * math.cos(_rad(b.latitude));
-    final x = math.cos(_rad(a.latitude)) * math.sin(_rad(b.latitude)) -
-        math.sin(_rad(a.latitude)) * math.cos(_rad(b.latitude)) * math.cos(dLon);
+    final x =
+        math.cos(_rad(a.latitude)) * math.sin(_rad(b.latitude)) -
+        math.sin(_rad(a.latitude)) *
+            math.cos(_rad(b.latitude)) *
+            math.cos(dLon);
     return (_deg(math.atan2(y, x)) + 360) % 360;
   }
 
@@ -87,10 +99,15 @@ class _NavigationScreenState extends State<NavigationScreen> {
     final lat1 = _rad(from.latitude);
     final lon1 = _rad(from.longitude);
     final lat2 = math.asin(
-        math.sin(lat1) * math.cos(d) + math.cos(lat1) * math.sin(d) * math.cos(brng));
-    final lon2 = lon1 +
-        math.atan2(math.sin(brng) * math.sin(d) * math.cos(lat1),
-            math.cos(d) - math.sin(lat1) * math.sin(lat2));
+      math.sin(lat1) * math.cos(d) +
+          math.cos(lat1) * math.sin(d) * math.cos(brng),
+    );
+    final lon2 =
+        lon1 +
+        math.atan2(
+          math.sin(brng) * math.sin(d) * math.cos(lat1),
+          math.cos(d) - math.sin(lat1) * math.sin(lat2),
+        );
     return LatLng(_deg(lat2), _deg(lon2));
   }
 
@@ -120,13 +137,21 @@ class _NavigationScreenState extends State<NavigationScreen> {
       var diff = (after - before + 540) % 360 - 180; // [-180,180]
       if (diff.abs() > 28) {
         if (diff > 0) {
-          return (distanceM: acc, text: 'Поворот направо', icon: Icons.turn_right);
+          return (
+            distanceM: acc,
+            text: 'Поворот направо',
+            icon: Icons.turn_right,
+          );
         }
         return (distanceM: acc, text: 'Поворот налево', icon: Icons.turn_left);
       }
       if (acc > 1500) break;
     }
-    return (distanceM: _remainingM, text: 'Двигайтесь прямо', icon: Icons.straight);
+    return (
+      distanceM: _remainingM,
+      text: 'Двигайтесь прямо',
+      icon: Icons.straight,
+    );
   }
 
   String _fmt(double m) =>
@@ -147,35 +172,50 @@ class _NavigationScreenState extends State<NavigationScreen> {
               options: MapOptions(initialCenter: pos, initialZoom: 16.5),
               children: [
                 kidsTileLayer(),
-                PolylineLayer(polylines: [
-                  Polyline(points: _route, strokeWidth: 7, color: AppColors.brand),
-                ]),
-                MarkerLayer(markers: [
-                  Marker(
-                    point: _route.last,
-                    width: 22,
-                    height: 22,
-                    child: const Icon(Icons.flag, color: Color(0xFFF97316), size: 22),
-                  ),
-                  Marker(
-                    point: pos,
-                    width: 48,
-                    height: 48,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2563EB),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 3),
-                        boxShadow: const [
-                          BoxShadow(color: Color(0x552563EB), blurRadius: 8),
-                        ],
-                      ),
-                      // Map rotates to course-up, so the arrow always points up.
-                      child: const Icon(Icons.navigation,
-                          color: Colors.white, size: 26),
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points: _route,
+                      strokeWidth: 7,
+                      color: AppColors.brand,
                     ),
-                  ),
-                ]),
+                  ],
+                ),
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: _route.last,
+                      width: 22,
+                      height: 22,
+                      child: const Icon(
+                        Icons.flag,
+                        color: Color(0xFFF97316),
+                        size: 22,
+                      ),
+                    ),
+                    Marker(
+                      point: pos,
+                      width: 48,
+                      height: 48,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2563EB),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 3),
+                          boxShadow: const [
+                            BoxShadow(color: Color(0x552563EB), blurRadius: 8),
+                          ],
+                        ),
+                        // Map rotates to course-up, so the arrow always points up.
+                        child: const Icon(
+                          Icons.navigation,
+                          color: Colors.white,
+                          size: 26,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -201,7 +241,9 @@ class _NavigationScreenState extends State<NavigationScreen> {
     );
   }
 
-  Widget _maneuverBanner(({double distanceM, String text, IconData icon}) turn) {
+  Widget _maneuverBanner(
+    ({double distanceM, String text, IconData icon}) turn,
+  ) {
     final arrived = _arrived;
     return Container(
       height: 74,
@@ -215,30 +257,43 @@ class _NavigationScreenState extends State<NavigationScreen> {
         children: [
           _closeButton(),
           const SizedBox(width: 8),
-          Icon(arrived ? Icons.check_circle : turn.icon,
-              color: arrived ? Colors.white : AppColors.brand, size: 34),
+          Icon(
+            arrived ? Icons.check_circle : turn.icon,
+            color: arrived ? Colors.white : AppColors.brand,
+            size: 34,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: arrived
-                ? const Text('Вы на месте',
+                ? const Text(
+                    'Вы на месте',
                     style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800))
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  )
                 : Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('через ${_fmt(turn.distanceM)}',
-                          style: const TextStyle(
-                              color: Colors.white70, fontSize: 13)),
-                      Text(turn.text,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700)),
+                      Text(
+                        'через ${_fmt(turn.distanceM)}',
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 13,
+                        ),
+                      ),
+                      Text(
+                        turn.text,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ],
                   ),
           ),
@@ -248,15 +303,17 @@ class _NavigationScreenState extends State<NavigationScreen> {
   }
 
   Widget _closeButton() => InkResponse(
-        onTap: () => Navigator.pop(context),
-        child: Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-              color: Colors.white24, borderRadius: BorderRadius.circular(10)),
-          child: const Icon(Icons.close, color: Colors.white, size: 20),
-        ),
-      );
+    onTap: () => Navigator.pop(context),
+    child: Container(
+      width: 34,
+      height: 34,
+      decoration: BoxDecoration(
+        color: Colors.white24,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: const Icon(Icons.close, color: Colors.white, size: 20),
+    ),
+  );
 
   Widget _bottomBar() {
     return Container(
@@ -277,10 +334,15 @@ class _NavigationScreenState extends State<NavigationScreen> {
                 const Icon(Icons.place, color: Color(0xFFF97316), size: 18),
                 const SizedBox(width: 6),
                 Expanded(
-                  child: Text(widget.targetText,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w600)),
+                  child: Text(
+                    widget.targetText,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFF111827),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -295,15 +357,20 @@ class _NavigationScreenState extends State<NavigationScreen> {
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
-              height: 50,
+              height: 58,
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(context),
                 style: _arrived
-                    ? ElevatedButton.styleFrom(backgroundColor: AppColors.success)
+                    ? ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.success,
+                      )
                     : null,
-                child: Text(_arrived ? 'Готово' : 'Свернуть навигатор',
-                    style: TextStyle(
-                        color: _arrived ? Colors.white : AppColors.ink)),
+                child: Text(
+                  _arrived ? 'Готово' : 'Свернуть навигатор',
+                  style: TextStyle(
+                    color: _arrived ? Colors.white : AppColors.onBrand,
+                  ),
+                ),
               ),
             ),
           ],
@@ -313,10 +380,18 @@ class _NavigationScreenState extends State<NavigationScreen> {
   }
 
   Widget _stat(String v, String l) => Column(
-        children: [
-          Text(v, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-          Text(l, style: const TextStyle(color: AppColors.muted, fontSize: 12)),
-        ],
-      );
-
+    children: [
+      Text(
+        v,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          color: Color(0xFF111827),
+          fontSize: 18,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+      Text(l, style: const TextStyle(color: AppColors.muted, fontSize: 12)),
+    ],
+  );
 }
