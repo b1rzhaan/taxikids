@@ -70,6 +70,7 @@ class ParentProfile(models.Model):
     full_name = models.CharField(max_length=120)
     phone = models.CharField(max_length=32, blank=True)
     default_address = models.CharField(max_length=255, blank=True)
+    photo = models.ImageField(upload_to="parents/", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

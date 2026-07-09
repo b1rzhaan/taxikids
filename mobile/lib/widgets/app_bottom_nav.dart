@@ -69,12 +69,11 @@ class AppBottomNav extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: _barColor,
                     borderRadius: hasCenter ? null : BorderRadius.circular(40),
-                    border: Border.all(color: AppColors.line),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.10),
-                        blurRadius: 28,
-                        offset: const Offset(0, 12),
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 18,
+                        offset: const Offset(0, 8),
                       ),
                     ],
                   ),
@@ -97,9 +96,9 @@ class AppBottomNav extends StatelessWidget {
                       borderRadius: BorderRadius.circular(44),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.brand.withValues(alpha: 0.18),
-                          blurRadius: 34,
-                          spreadRadius: -2,
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 14,
+                          offset: Offset(0, 6),
                         ),
                       ],
                     ),
@@ -242,9 +241,9 @@ class _CenterButtonState extends State<_CenterButton> {
             border: Border.all(color: AppColors.bg, width: 4),
             boxShadow: [
               BoxShadow(
-                color: AppColors.brand.withValues(alpha: 0.55),
-                blurRadius: 18,
-                spreadRadius: 1,
+                color: Colors.black.withValues(alpha: 0.12),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
               ),
             ],
           ),

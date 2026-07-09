@@ -223,7 +223,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
           clipBehavior: Clip.hardEdge,
           children: [
             Positioned(
-              right: -18,
+              right: 10,
               bottom: 14,
               child: TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0, end: 1),
@@ -240,7 +240,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                 },
                 child: Image.asset(
                   'assets/car.png',
-                  height: 112,
+                  height: 98,
                   fit: BoxFit.contain,
                 ),
               ),
@@ -428,53 +428,68 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
 
   Widget _insightStrip(int activeCount, int todayCount) {
     final childrenCount = _children.length;
-    return Row(
-      children: [
-        Expanded(
-          child: _metricCard(
-            Icons.child_care_outlined,
-            '$childrenCount',
-            'детей',
-            AppColors.brand,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.line),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
           ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _metricCard(
-            Icons.route_outlined,
-            '$todayCount',
-            'сегодня',
-            const Color(0xFF4C8DFF),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _railItem(
+              Icons.child_care_outlined,
+              '$childrenCount',
+              'детей',
+              AppColors.brand,
+            ),
           ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _metricCard(
-            Icons.shield_outlined,
-            activeCount > 0 ? '$activeCount' : '24/7',
-            activeCount > 0 ? 'активно' : 'связь',
-            AppColors.success,
+          _railDivider(),
+          Expanded(
+            child: _railItem(
+              Icons.route_outlined,
+              '$todayCount',
+              'сегодня',
+              const Color(0xFF4C8DFF),
+            ),
           ),
-        ),
-      ],
+          _railDivider(),
+          Expanded(
+            child: _railItem(
+              Icons.shield_outlined,
+              activeCount > 0 ? '$activeCount' : '24/7',
+              activeCount > 0 ? 'активно' : 'связь',
+              AppColors.success,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _metricCard(IconData icon, String value, String label, Color color) {
-    return Container(
-      height: 82,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.22)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Icon(icon, color: color, size: 20),
-          Column(
+  Widget _railItem(IconData icon, String value, String label, Color color) {
+    return Row(
+      children: [
+        Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: color, size: 18),
+        ),
+        const SizedBox(width: 9),
+        Expanded(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
@@ -482,10 +497,12 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.w900,
+                  height: 1.0,
                 ),
               ),
+              const SizedBox(height: 3),
               Text(
                 label,
                 maxLines: 1,
@@ -494,8 +511,17 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
               ),
             ],
           ),
-        ],
-      ),
+        ),
+      ],
+    );
+  }
+
+  Widget _railDivider() {
+    return Container(
+      width: 1,
+      height: 34,
+      margin: const EdgeInsets.symmetric(horizontal: 10),
+      color: AppColors.line,
     );
   }
 

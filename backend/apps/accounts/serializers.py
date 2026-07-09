@@ -46,10 +46,19 @@ class ParentRegisterSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
+    photo = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ["id", "email", "phone", "role", "full_name", "date_joined"]
+        fields = [
+            "id",
+            "email",
+            "phone",
+            "role",
+            "full_name",
+            "photo",
+            "date_joined",
+        ]
 
     def get_full_name(self, obj) -> str:
         if hasattr(obj, "parent_profile"):
@@ -57,6 +66,19 @@ class UserSerializer(serializers.ModelSerializer):
         if hasattr(obj, "driver_profile"):
             return obj.driver_profile.full_name
         return ""
+
+    def get_photo(self, obj) -> str:
+        profile = None
+        if hasattr(obj, "parent_profile"):
+            profile = obj.parent_profile
+        elif hasattr(obj, "driver_profile"):
+            profile = obj.driver_profile
+        photo = getattr(profile, "photo", None)
+        if not photo:
+            return ""
+        request = self.context.get("request")
+        url = photo.url
+        return request.build_absolute_uri(url) if request else url
 
 
 class SavedAddressSerializer(serializers.ModelSerializer):

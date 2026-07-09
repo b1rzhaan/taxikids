@@ -21,6 +21,22 @@ class AuthService {
   static Future<Map<String, dynamic>> me() async =>
       Map<String, dynamic>.from(await _api.get('/auth/me/'));
 
+  static Future<Map<String, dynamic>> updateMe({
+    required String fullName,
+    required String phone,
+    List<int>? photo,
+    String photoName = 'profile.jpg',
+  }) async {
+    final form = FormData.fromMap({
+      'full_name': fullName,
+      'phone': phone,
+      if (photo != null)
+        'photo': MultipartFile.fromBytes(photo, filename: photoName),
+    });
+    final data = await _api.patch('/auth/me/', form);
+    return Map<String, dynamic>.from(data);
+  }
+
   static Future<Session> register({
     required String email,
     required String phone,
