@@ -29,7 +29,7 @@ class AppBottomNav extends StatelessWidget {
     this.centerIcon = Icons.local_taxi,
   });
 
-  static const _barColor = Color(0xFF151515);
+  static const _barColor = Colors.white;
 
   @override
   Widget build(BuildContext context) {
@@ -69,11 +69,12 @@ class AppBottomNav extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: _barColor,
                     borderRadius: hasCenter ? null : BorderRadius.circular(40),
+                    border: Border.all(color: AppColors.line),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.55),
-                        blurRadius: 30,
-                        offset: const Offset(0, 14),
+                        color: Colors.black.withValues(alpha: 0.10),
+                        blurRadius: 28,
+                        offset: const Offset(0, 12),
                       ),
                     ],
                   ),
@@ -96,7 +97,7 @@ class AppBottomNav extends StatelessWidget {
                       borderRadius: BorderRadius.circular(44),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.brand.withValues(alpha: 0.10),
+                          color: AppColors.brand.withValues(alpha: 0.18),
                           blurRadius: 34,
                           spreadRadius: -2,
                         ),
@@ -167,7 +168,7 @@ class NavigationItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = active ? Colors.white : const Color(0xFF787878);
+    final color = active ? AppColors.ink : AppColors.muted;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(22),

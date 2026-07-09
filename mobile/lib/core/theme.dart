@@ -1,20 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// «Детское такси» design tokens — dark theme, yellow accent, white text.
+/// «Детское такси» design tokens — light theme, yellow taxi accent.
 class AppColors {
   static const brand = Color(0xFFFFD400); // vivid yellow accent
   static const brandDark = Color(0xFFE6B800);
   static const onBrand = Color(0xFF141414); // dark text ON yellow surfaces
-  static const brandSoft = Color(0xFF262417); // subtle yellow-tinted dark chip
-  // `ink` is the PRIMARY text colour. On the dark theme it is near-white so
-  // the ~35 existing `AppColors.ink` text usages stay readable everywhere.
-  static const ink = Color(0xFFF5F6F8);
-  static const muted = Color(0xFF9AA0AC); // secondary text on dark
-  static const bg = Color(0xFF0C0D11); // app background (near-black)
-  static const surface = Color(0xFF17191F); // cards / bottom sheets
-  static const surface2 = Color(0xFF23262E); // inputs / elevated chips
-  static const line = Color(0xFF2A2E37); // borders / dividers on dark
+  static const brandSoft = Color(0xFFFFF6CC); // soft yellow card/chip tint
+  static const ink = Color(0xFF111827); // primary text on light
+  static const muted = Color(0xFF6B7280); // secondary text on light
+  static const bg = Color(0xFFFFFFFF); // app background
+  static const surface = Color(0xFFFFFFFF); // cards / bottom sheets
+  static const surface2 = Color(0xFFF3F4F6); // inputs / elevated chips
+  static const line = Color(0xFFE5E7EB); // borders / dividers on light
   static const success = Color(0xFF35C759);
   static const danger = Color(0xFFF04444);
 }
@@ -22,9 +20,9 @@ class AppColors {
 ThemeData buildTheme() {
   final base = ThemeData(
     useMaterial3: true,
-    brightness: Brightness.dark,
+    brightness: Brightness.light,
     scaffoldBackgroundColor: AppColors.bg,
-    colorScheme: const ColorScheme.dark(
+    colorScheme: const ColorScheme.light(
       primary: AppColors.brand,
       onPrimary: AppColors.onBrand,
       secondary: AppColors.brand,
@@ -35,10 +33,9 @@ ThemeData buildTheme() {
     ),
   );
 
-  final text = GoogleFonts.manropeTextTheme(base.textTheme).apply(
-    bodyColor: AppColors.ink,
-    displayColor: AppColors.ink,
-  );
+  final text = GoogleFonts.manropeTextTheme(
+    base.textTheme,
+  ).apply(bodyColor: AppColors.ink, displayColor: AppColors.ink);
 
   return base.copyWith(
     textTheme: text,
@@ -64,7 +61,10 @@ ThemeData buildTheme() {
         disabledForegroundColor: AppColors.muted,
         elevation: 0,
         padding: const EdgeInsets.symmetric(vertical: 16),
-        textStyle: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.w800),
+        textStyle: GoogleFonts.manrope(
+          fontSize: 16,
+          fontWeight: FontWeight.w800,
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       ),
     ),
@@ -72,7 +72,10 @@ ThemeData buildTheme() {
       style: OutlinedButton.styleFrom(
         foregroundColor: AppColors.ink,
         padding: const EdgeInsets.symmetric(vertical: 15),
-        textStyle: GoogleFonts.manrope(fontSize: 15, fontWeight: FontWeight.w700),
+        textStyle: GoogleFonts.manrope(
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
+        ),
         side: const BorderSide(color: AppColors.line),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       ),
@@ -80,7 +83,10 @@ ThemeData buildTheme() {
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: AppColors.brand,
-        textStyle: GoogleFonts.manrope(fontSize: 14, fontWeight: FontWeight.w700),
+        textStyle: GoogleFonts.manrope(
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
@@ -107,7 +113,10 @@ ThemeData buildTheme() {
       color: AppColors.surface,
       surfaceTintColor: AppColors.surface,
       elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(22),
+        side: const BorderSide(color: AppColors.line),
+      ),
       margin: EdgeInsets.zero,
     ),
     dividerTheme: const DividerThemeData(color: AppColors.line, thickness: 1),
@@ -121,18 +130,22 @@ ThemeData buildTheme() {
       indicatorColor: AppColors.brand,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
-      iconTheme: WidgetStateProperty.resolveWith((s) => IconThemeData(
-            color: s.contains(WidgetState.selected)
-                ? AppColors.onBrand
-                : AppColors.muted,
-          )),
-      labelTextStyle: WidgetStateProperty.resolveWith((s) => GoogleFonts.manrope(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            color: s.contains(WidgetState.selected)
-                ? AppColors.ink
-                : AppColors.muted,
-          )),
+      iconTheme: WidgetStateProperty.resolveWith(
+        (s) => IconThemeData(
+          color: s.contains(WidgetState.selected)
+              ? AppColors.onBrand
+              : AppColors.muted,
+        ),
+      ),
+      labelTextStyle: WidgetStateProperty.resolveWith(
+        (s) => GoogleFonts.manrope(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: s.contains(WidgetState.selected)
+              ? AppColors.ink
+              : AppColors.muted,
+        ),
+      ),
       height: 68,
     ),
   );
@@ -161,11 +174,14 @@ class InitialAvatar extends StatelessWidget {
     return CircleAvatar(
       radius: radius,
       backgroundColor: color.withValues(alpha: 0.16),
-      child: Text(letter,
-          style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.w800,
-              fontSize: radius * 0.85)),
+      child: Text(
+        letter,
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.w800,
+          fontSize: radius * 0.85,
+        ),
+      ),
     );
   }
 }

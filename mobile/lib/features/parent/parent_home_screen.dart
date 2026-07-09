@@ -208,7 +208,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF2B250B), Color(0xFF151515)],
+            colors: [Color(0xFFFFF4B8), Colors.white],
           ),
           border: Border.all(color: AppColors.brand.withValues(alpha: 0.35)),
           boxShadow: [
@@ -271,7 +271,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.08),
+                      color: AppColors.brand.withValues(alpha: 0.18),
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
@@ -279,7 +279,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                           ? 'Поездка в процессе'
                           : 'Готовы к заказу',
                       style: const TextStyle(
-                        color: AppColors.brand,
+                        color: AppColors.onBrand,
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
                       ),
@@ -294,6 +294,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                         child: Text(
                           'Закажите поездку\nдля ребёнка',
                           style: TextStyle(
+                            color: AppColors.ink,
                             fontSize: 22,
                             height: 1.15,
                             fontWeight: FontWeight.w800,
@@ -303,10 +304,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                       const SizedBox(height: 6),
                       Text(
                         'Маршрут, водитель и статус — в одном экране',
-                        style: TextStyle(
-                          color: AppColors.muted.withValues(alpha: 0.9),
-                          fontSize: 12,
-                        ),
+                        style: TextStyle(color: AppColors.muted, fontSize: 12),
                       ),
                       const SizedBox(height: 10),
                       const Wrap(
@@ -642,7 +640,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF111318),
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: AppColors.brand.withValues(alpha: 0.22)),
       ),
