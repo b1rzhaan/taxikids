@@ -202,7 +202,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
     return GestureDetector(
       onTap: _order,
       child: Container(
-        height: 224,
+        height: 262,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(26),
           gradient: const LinearGradient(
@@ -292,7 +292,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                       const SizedBox(
                         width: 205,
                         child: Text(
-                          'Детская поездка без лишних звонков',
+                          'Закажите поездку\nдля ребёнка',
                           style: TextStyle(
                             fontSize: 22,
                             height: 1.15,
@@ -330,12 +330,10 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                   SizedBox(
                     width: 190,
                     height: 48,
-                    child: ElevatedButton(
-                      onPressed: _order,
-                      style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(999),
-                        ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.brand,
+                        borderRadius: BorderRadius.circular(999),
                       ),
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -345,10 +343,19 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                               'Заказать',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: AppColors.onBrand,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 16,
+                              ),
                             ),
                           ),
                           SizedBox(width: 8),
-                          Icon(Icons.arrow_forward, size: 18),
+                          Icon(
+                            Icons.arrow_forward,
+                            color: AppColors.onBrand,
+                            size: 20,
+                          ),
                         ],
                       ),
                     ),
