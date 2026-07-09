@@ -235,12 +235,12 @@ if os.getenv("CLOUDINARY_URL"):
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # ── Pluggable providers (Ports & Adapters) ────────────────────────────
-MAP_PROVIDER = os.getenv("MAP_PROVIDER", "mock")
+TWOGIS_API_KEY = os.getenv("TWOGIS_API_KEY", "")
+MAP_PROVIDER = os.getenv("MAP_PROVIDER", "twogis" if TWOGIS_API_KEY else "mock")
 # Bias geocoding/suggestions toward the service city (Almaty by default) so a
 # query like "Достык 91" ranks local results first instead of other cities.
 MAP_BIAS_LAT = float(os.getenv("MAP_BIAS_LAT", "43.238"))
 MAP_BIAS_LNG = float(os.getenv("MAP_BIAS_LNG", "76.945"))
-TWOGIS_API_KEY = os.getenv("TWOGIS_API_KEY", "")
 TWOGIS_BASE_URL = os.getenv("TWOGIS_BASE_URL", "https://routing.api.2gis.com")
 TWOGIS_CATALOG_URL = os.getenv("TWOGIS_CATALOG_URL", "https://catalog.api.2gis.com")
 

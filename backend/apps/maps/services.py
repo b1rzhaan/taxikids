@@ -21,9 +21,11 @@ def get_map_provider() -> MapProvider:
 
 
 def safe_route(origin: Point, dest: Point) -> Route:
-    """Build a route, falling back to the mock provider if the real one fails."""
+    """Build a route without silently faking 2GIS production failures."""
     provider = get_map_provider()
     try:
         return provider.route(origin, dest)
     except Exception:  # noqa: BLE001 — any provider/network error → graceful demo
+        if provider.name == "twogis":
+            raise
         return MockMapProvider().route(origin, dest)

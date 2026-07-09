@@ -65,6 +65,7 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final name = (_me?['full_name'] as String?)?.split(' ').first ?? '';
+    final photo = '${_me?['photo'] ?? ''}';
     final stats = (_me?['stats'] as Map?) ?? {};
     final docStatus = '${_me?['doc_status'] ?? 'approved'}';
     final approved = docStatus == 'approved';
@@ -83,7 +84,11 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                   children: [
                     Row(
                       children: [
-                        InitialAvatar(name.isEmpty ? 'В' : name, radius: 24),
+                        PhotoAvatar(
+                          name: name.isEmpty ? 'В' : name,
+                          photoUrl: photo,
+                          radius: 24,
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(

@@ -11,10 +11,9 @@ List _results(dynamic data) => data is Map && data.containsKey('results')
 String _cleanAddressText(String text) {
   final trimmed = text.trim();
   if (trimmed.toLowerCase().startsWith('демо-адрес')) {
-    final coords = RegExp(r'\(([^)]+)\)').firstMatch(trimmed)?.group(1);
-    return coords == null ? 'Точка на карте' : 'Точка на карте ($coords)';
+    return 'Адрес не найден';
   }
-  return trimmed.isEmpty ? 'Точка на карте' : trimmed;
+  return trimmed.isEmpty ? 'Адрес не найден' : trimmed;
 }
 
 class AuthService {
@@ -192,7 +191,7 @@ class MapsService {
       );
       return _cleanAddressText((data['text'] as String?) ?? '');
     } catch (_) {
-      return 'Точка на карте';
+      return 'Адрес не найден';
     }
   }
 

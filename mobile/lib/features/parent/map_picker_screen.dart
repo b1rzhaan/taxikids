@@ -59,7 +59,9 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
       }
       final p = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.high, timeLimit: Duration(seconds: 10)),
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 10),
+        ),
       );
       final here = LatLng(p.latitude, p.longitude);
       setState(() => _point = here);
@@ -96,15 +98,20 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
             ),
             children: [
               kidsTileLayer(),
-              MarkerLayer(markers: [
-                Marker(
-                  point: _point,
-                  width: 44,
-                  height: 44,
-                  child: const Icon(Icons.location_on,
-                      color: AppColors.danger, size: 44),
-                ),
-              ]),
+              MarkerLayer(
+                markers: [
+                  Marker(
+                    point: _point,
+                    width: 44,
+                    height: 44,
+                    child: const Icon(
+                      Icons.location_on,
+                      color: AppColors.danger,
+                      size: 44,
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
           // Precise "my location" button — jumps the picker to the client's GPS.
@@ -121,7 +128,10 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                       height: 22,
                       width: 22,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: AppColors.brandDark))
+                        strokeWidth: 2,
+                        color: AppColors.brandDark,
+                      ),
+                    )
                   : const Icon(Icons.my_location),
             ),
           ),
@@ -136,8 +146,10 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Нажмите на карту, чтобы выбрать точку',
-                        style: TextStyle(color: AppColors.muted, fontSize: 12)),
+                    const Text(
+                      'Нажмите на карту, чтобы выбрать точку',
+                      style: TextStyle(color: AppColors.muted, fontSize: 12),
+                    ),
                     const SizedBox(height: 6),
                     Row(
                       children: [
@@ -146,9 +158,12 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                         Expanded(
                           child: _resolving
                               ? const Text('Определяем адрес…')
-                              : Text(_address,
+                              : Text(
+                                  _address,
                                   style: const TextStyle(
-                                      fontWeight: FontWeight.w600)),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                         ),
                       ],
                     ),
@@ -158,8 +173,11 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                       child: ElevatedButton(
                         onPressed: () => Navigator.pop(
                           context,
-                          PickedPoint(_point.latitude, _point.longitude,
-                              _address.isEmpty ? 'Точка на карте' : _address),
+                          PickedPoint(
+                            _point.latitude,
+                            _point.longitude,
+                            _address.isEmpty ? 'Адрес не найден' : _address,
+                          ),
                         ),
                         child: const Text('Выбрать эту точку'),
                       ),

@@ -76,29 +76,37 @@ class TwoGisProvider(MapProvider):
         return [r for r in results if r is not None]
 
     def reverse_geocode(self, lat: float, lng: float) -> str | None:
-        url = f"{self.catalog_url}/3.0/items/geocode"
         # type=building+radius returns the nearest building (street + house),
         # otherwise 2GIS returns only broad districts (adm_div).
+        items = self._reverse_items(lat, lng, {"type": "building", "radius": 200})
+        for item in items:
+            name = item.get("address_name") or item.get("full_name") or item.get("name")
+            if name:
+                return name
+        if not items:
+            items = self._reverse_items(lat, lng, {"radius": 600})
+        for item in items:
+            name = item.get("address_name") or item.get("full_name") or item.get("name")
+            if name:
+                return name
+        return None
+
+    def _reverse_items(self, lat: float, lng: float, extra: dict | None = None) -> list[dict]:
+        url = f"{self.catalog_url}/3.0/items/geocode"
         params = {
             "lat": lat,
             "lon": lng,
-            "type": "building",
-            "radius": 200,
-            "fields": "items.point,items.full_name,items.address",
+            "fields": "items.point,items.full_name,items.address,items.address_name",
             "key": self.key,
+            **(extra or {}),
         }
         try:
             resp = requests.get(url, params=params, timeout=15)
             resp.raise_for_status()
-            items = resp.json().get("result", {}).get("items", [])
+            return resp.json().get("result", {}).get("items", [])
         except (requests.RequestException, ValueError) as exc:
             logger.warning("2GIS reverse geocode failed: %s", exc)
             raise MapProviderError(str(exc)) from exc
-        for item in items:
-            name = item.get("full_name")
-            if name:
-                return name
-        return None
 
     # ── Routing (traffic-aware) ───────────────────────────────────────
     def route(self, origin: Point, dest: Point) -> Route:
