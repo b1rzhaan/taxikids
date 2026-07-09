@@ -86,6 +86,7 @@ class Trip(models.Model):
         ParentProfile, on_delete=models.PROTECT, related_name="trips"
     )
     child = models.ForeignKey(Child, on_delete=models.PROTECT)
+    children = models.ManyToManyField(Child, blank=True, related_name="shared_trips")
     driver = models.ForeignKey(
         DriverProfile,
         on_delete=models.SET_NULL,

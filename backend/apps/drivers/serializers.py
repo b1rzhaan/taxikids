@@ -47,14 +47,21 @@ class DriverProfileSerializer(serializers.ModelSerializer):
 class DriverPublicSerializer(serializers.ModelSerializer):
     """What a parent sees about their assigned driver."""
 
+    photo = serializers.SerializerMethodField()
     vehicle = serializers.SerializerMethodField()
 
     class Meta:
         model = DriverProfile
         fields = [
             "id", "full_name", "phone", "rating",
-            "experience_years", "has_child_seat", "vehicle",
+            "experience_years", "has_child_seat", "photo", "vehicle",
         ]
+
+    def get_photo(self, obj):
+        request = self.context.get("request")
+        if not obj.photo:
+            return ""
+        return request.build_absolute_uri(obj.photo.url) if request else obj.photo.url
 
     def get_vehicle(self, obj):
         vehicle = obj.vehicles.filter(is_active=True).first()

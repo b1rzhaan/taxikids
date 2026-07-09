@@ -7,6 +7,7 @@ from .views import (
     TariffViewSet,
     VehicleViewSet,
     driver_me,
+    driver_me_photo,
     driver_set_online,
     drivers_locations,
 )
@@ -20,6 +21,7 @@ router.register("salary-schemes", SalarySchemeViewSet, basename="salary-scheme")
 # Explicit driver-self routes must precede the router's /drivers/{pk}/.
 urlpatterns = [
     path("drivers/me/", driver_me, name="driver-me"),
+    path("drivers/me/photo/", driver_me_photo, name="driver-me-photo"),
     path("drivers/me/online/", driver_set_online, name="driver-online"),
     path("drivers/locations/", drivers_locations, name="drivers-locations"),
     *router.urls,

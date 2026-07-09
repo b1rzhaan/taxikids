@@ -6,6 +6,7 @@ import '../../core/api_client.dart';
 import '../../core/theme.dart';
 import '../../state/auth_state.dart';
 import '../../services/services.dart';
+import '../../widgets/profile_quick_actions.dart';
 import 'wallet_screen.dart';
 import 'children_screen.dart';
 import 'history_screen.dart';
@@ -57,28 +58,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
           // ── Centered identity (Yandex-style) ──
           Center(child: _identity(email)),
           const SizedBox(height: 22),
-          // ── Quick-action circles ──
-          Row(
-            children: [
-              _circle(
-                Icons.receipt_long_outlined,
-                'Заказы',
-                () => _go(const HistoryScreen()),
+          ProfileQuickActions(
+            actions: [
+              ProfileQuickAction(
+                icon: Icons.receipt_long_outlined,
+                label: 'Заказы',
+                onTap: () => _go(const HistoryScreen()),
               ),
-              _circle(
-                Icons.headset_mic_outlined,
-                'Поддержка',
-                () => _go(const MessagesScreen(initialIndex: 1)),
+              ProfileQuickAction(
+                icon: Icons.headset_mic_outlined,
+                label: 'Поддержка',
+                onTap: () => _go(const MessagesScreen(initialIndex: 1)),
               ),
-              _circle(
-                Icons.child_care_outlined,
-                'Дети',
-                () => _go(const ChildrenScreen()),
+              ProfileQuickAction(
+                icon: Icons.child_care_outlined,
+                label: 'Дети',
+                onTap: () => _go(const ChildrenScreen()),
               ),
-              _circle(
-                Icons.account_balance_wallet_outlined,
-                'Кошелёк',
-                () => _go(const WalletScreen()),
+              ProfileQuickAction(
+                icon: Icons.account_balance_wallet_outlined,
+                label: 'Кошелёк',
+                onTap: () => _go(const WalletScreen()),
               ),
             ],
           ),
@@ -342,32 +342,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await _load();
       widget.onProfileChanged?.call();
     }
-  }
-
-  Widget _circle(IconData icon, String label, VoidCallback onTap) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Column(
-          children: [
-            Container(
-              height: 58,
-              width: 58,
-              decoration: const BoxDecoration(
-                color: AppColors.surface,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: AppColors.brand, size: 24),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   Widget _highlightCard() {

@@ -4,7 +4,8 @@ import math
 from django.db.models import Sum
 from django.utils import timezone
 from rest_framework import viewsets
-from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.decorators import action, api_view, parser_classes, permission_classes
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
 from apps.accounts.permissions import (
@@ -23,14 +24,10 @@ from .serializers import (
 )
 
 
-@api_view(["GET"])
-@permission_classes([IsDriver])
-def driver_me(request):
-    """The driver's own profile + dashboard stats."""
+def _driver_me_payload(request, d):
     from apps.payouts.models import DriverEarning
     from apps.trips.models import Trip, TripRating, TripStatus
 
-    d = request.user.driver_profile
     today = timezone.localdate()
     week = today - dt.timedelta(days=7)
     month = today - dt.timedelta(days=30)
@@ -40,10 +37,11 @@ def driver_me(request):
         return qs.aggregate(x=Sum("amount"))["x"] or 0
 
     vehicle = d.vehicles.filter(is_active=True).first()
-    return Response({
+    return {
         "id": d.id,
         "full_name": d.full_name,
         "phone": d.phone,
+        "photo": request.build_absolute_uri(d.photo.url) if d.photo else "",
         "iin": d.iin,
         "doc_status": d.doc_status,
         "rating": str(d.rating),
@@ -64,7 +62,35 @@ def driver_me(request):
             "completed_total": Trip.objects.filter(
                 driver=d, status=TripStatus.COMPLETED).count(),
         },
-    })
+    }
+
+
+@api_view(["GET", "PATCH"])
+@permission_classes([IsDriver])
+@parser_classes([MultiPartParser, FormParser])
+def driver_me(request):
+    """The driver's own profile + dashboard stats."""
+    d = request.user.driver_profile
+    if request.method == "PATCH":
+        photo = request.FILES.get("photo")
+        if photo:
+            d.photo = photo
+            d.save(update_fields=["photo"])
+    return Response(_driver_me_payload(request, d))
+
+
+@api_view(["POST"])
+@permission_classes([IsDriver])
+@parser_classes([MultiPartParser, FormParser])
+def driver_me_photo(request):
+    """Upload/replace the current driver's profile photo."""
+    d = request.user.driver_profile
+    photo = request.FILES.get("photo")
+    if not photo:
+        return Response({"detail": "photo is required"}, status=400)
+    d.photo = photo
+    d.save(update_fields=["photo"])
+    return Response(_driver_me_payload(request, d))
 
 
 def update_driver_position(driver, lat, lng):

@@ -22,7 +22,7 @@ class CreateTripScreen extends StatefulWidget {
 class _CreateTripScreenState extends State<CreateTripScreen> {
   final _map = MapController();
   List<Child> _children = [];
-  Child? _child;
+  final Set<int> _selectedChildIds = {};
   PickedPoint? _pickup;
   PickedPoint? _dropoff;
   DateTime _when = DateTime.now().add(const Duration(hours: 1));
@@ -42,10 +42,11 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
     try {
       _children = await ChildrenService.list();
       if (_children.isNotEmpty) {
-        _child = _children.firstWhere(
+        final primary = _children.firstWhere(
           (c) => c.isPrimary,
           orElse: () => _children.first,
         );
+        _selectedChildIds.add(primary.id);
       }
     } catch (_) {}
     if (mounted) setState(() => _loading = false);
@@ -128,11 +129,18 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
   }
 
   Future<void> _submit() async {
-    if (_child == null || _pickup == null || _dropoff == null) return;
+    if (_selectedChildIds.isEmpty || _pickup == null || _dropoff == null) {
+      return;
+    }
+    final selectedChildren = _children
+        .where((child) => _selectedChildIds.contains(child.id))
+        .toList();
+    if (selectedChildren.isEmpty) return;
     setState(() => _submitting = true);
     try {
       final trip = await TripsService.create(
-        childId: _child!.id,
+        childId: selectedChildren.first.id,
+        childIds: selectedChildren.map((child) => child.id).toList(),
         pickupText: _pickup!.text,
         pickupLat: _pickup!.lat,
         pickupLng: _pickup!.lng,
@@ -221,7 +229,8 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
   }
 
   Widget _sheet() {
-    final ready = _child != null && _pickup != null && _dropoff != null;
+    final selectedCount = _selectedChildIds.length;
+    final ready = selectedCount > 0 && _pickup != null && _dropoff != null;
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
@@ -304,7 +313,9 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                       )
                     : Text(
                         _estimate != null
-                            ? 'Заказать'
+                            ? selectedCount > 1
+                                  ? 'Заказать для $selectedCount детей'
+                                  : 'Заказать'
                             : ready
                             ? 'Рассчитываем…'
                             : 'Укажите маршрут',
@@ -399,9 +410,17 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
         separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (_, i) {
           final c = _children[i];
-          final sel = c.id == _child?.id;
+          final sel = _selectedChildIds.contains(c.id);
           return GestureDetector(
-            onTap: () => setState(() => _child = c),
+            onTap: () {
+              setState(() {
+                if (sel && _selectedChildIds.length > 1) {
+                  _selectedChildIds.remove(c.id);
+                } else {
+                  _selectedChildIds.add(c.id);
+                }
+              });
+            },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
               padding: const EdgeInsets.fromLTRB(6, 6, 16, 6),

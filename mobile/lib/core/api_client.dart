@@ -12,7 +12,6 @@ class ApiClient {
         connectTimeout: const Duration(seconds: 35),
         receiveTimeout: const Duration(seconds: 70),
         sendTimeout: const Duration(seconds: 35),
-        headers: {'Content-Type': 'application/json'},
       ),
     );
     _dio.interceptors.add(
@@ -72,11 +71,23 @@ class ApiClient {
   Future<dynamic> get(String path, {Map<String, dynamic>? query}) async =>
       (await _dio.get(path, queryParameters: query)).data;
 
-  Future<dynamic> post(String path, [Object? body]) async =>
-      (await _dio.post(path, data: body ?? {})).data;
+  Options _optionsFor(Object? body) => Options(
+    contentType: body is FormData
+        ? Headers.multipartFormDataContentType
+        : Headers.jsonContentType,
+  );
 
-  Future<dynamic> patch(String path, [Object? body]) async =>
-      (await _dio.patch(path, data: body ?? {})).data;
+  Future<dynamic> post(String path, [Object? body]) async => (await _dio.post(
+    path,
+    data: body ?? {},
+    options: _optionsFor(body),
+  )).data;
+
+  Future<dynamic> patch(String path, [Object? body]) async => (await _dio.patch(
+    path,
+    data: body ?? {},
+    options: _optionsFor(body),
+  )).data;
 
   Future<void> delete(String path) async => _dio.delete(path);
 

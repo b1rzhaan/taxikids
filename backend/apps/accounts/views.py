@@ -132,13 +132,16 @@ class MeView(generics.RetrieveAPIView):
         user = request.user
         profile = getattr(user, "parent_profile", None)
         if profile is None:
-            return Response({"detail": "profile update is only for parents"}, status=400)
+            profile = getattr(user, "driver_profile", None)
+        if profile is None:
+            return Response({"detail": "profile update is not available"}, status=400)
 
         full_name = (request.data.get("full_name") or "").strip()
         phone = (request.data.get("phone") or "").strip()
         if full_name:
             profile.full_name = full_name
-        profile.phone = phone
+        if hasattr(profile, "phone"):
+            profile.phone = phone
         user.phone = phone
         photo = request.FILES.get("photo")
         if photo:

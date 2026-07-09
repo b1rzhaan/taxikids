@@ -51,52 +51,52 @@ class AppBottomNav extends StatelessWidget {
 
     return SafeArea(
       top: false,
-      child: Container(
-        height: 104,
-        color: AppColors.bg,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Positioned(
-              left: 20,
-              right: 20,
-              bottom: 6,
-              child: Container(
-                height: 76,
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                decoration: BoxDecoration(
-                  color: _barColor,
-                  borderRadius: BorderRadius.circular(42),
-                  border: Border.all(color: AppColors.line),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.10),
-                      blurRadius: 24,
-                      offset: const Offset(0, 12),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return Container(
+            height: 104,
+            color: AppColors.bg,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned(
+                  left: 20,
+                  right: 20,
+                  bottom: 6,
+                  child: Container(
+                    height: 76,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      color: _barColor,
+                      borderRadius: BorderRadius.circular(42),
+                      border: Border.all(color: AppColors.line),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.10),
+                          blurRadius: 24,
+                          offset: const Offset(0, 12),
+                        ),
+                      ],
                     ),
-                  ],
+                    child: Material(
+                      color: Colors.transparent,
+                      child: Row(children: items),
+                    ),
+                  ),
                 ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: Row(children: items),
-                ),
-              ),
-            ),
-            if (hasCenter)
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  return Positioned(
+                if (hasCenter)
+                  Positioned(
                     left: (constraints.maxWidth - 64) / 2,
                     bottom: 12,
                     child: Material(
                       color: Colors.transparent,
                       child: _CenterButton(icon: centerIcon, onTap: onCenter!),
                     ),
-                  );
-                },
-              ),
-          ],
-        ),
+                  ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

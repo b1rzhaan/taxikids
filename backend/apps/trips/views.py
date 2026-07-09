@@ -29,7 +29,7 @@ class TripViewSet(viewsets.ModelViewSet):
         user = self.request.user
         qs = Trip.objects.select_related(
             "child", "driver", "parent", "tariff"
-        ).prefetch_related("ratings")
+        ).prefetch_related("children", "ratings")
         if user.role == Role.PARENT:
             return qs.filter(parent__user=user)
         if user.role == Role.DRIVER:
@@ -76,7 +76,7 @@ class TripViewSet(viewsets.ModelViewSet):
         """Paid orders not yet taken by any driver — the driver's job board."""
         qs = Trip.objects.filter(
             status=TripStatus.PAID, driver__isnull=True
-        ).select_related("child", "parent").order_by("scheduled_at")
+        ).select_related("child", "parent").prefetch_related("children").order_by("scheduled_at")
         return Response(TripListSerializer(qs, many=True).data)
 
     @action(detail=True, methods=["post"], permission_classes=[IsDriver])

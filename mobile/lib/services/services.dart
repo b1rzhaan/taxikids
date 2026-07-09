@@ -8,6 +8,15 @@ List _results(dynamic data) => data is Map && data.containsKey('results')
     ? data['results'] as List
     : (data as List);
 
+String _cleanAddressText(String text) {
+  final trimmed = text.trim();
+  if (trimmed.toLowerCase().startsWith('демо-адрес')) {
+    final coords = RegExp(r'\(([^)]+)\)').firstMatch(trimmed)?.group(1);
+    return coords == null ? 'Точка на карте' : 'Точка на карте ($coords)';
+  }
+  return trimmed.isEmpty ? 'Точка на карте' : trimmed;
+}
+
 class AuthService {
   static Future<Session> login(String email, String password) async {
     final data = await _api.post('/auth/login/', {
@@ -33,7 +42,7 @@ class AuthService {
       if (photo != null)
         'photo': MultipartFile.fromBytes(photo, filename: photoName),
     });
-    final data = await _api.patch('/auth/me/', form);
+    final data = await _api.post('/drivers/me/photo/', form);
     return Map<String, dynamic>.from(data);
   }
 
@@ -181,7 +190,7 @@ class MapsService {
         '/maps/reverse/',
         query: {'lat': lat, 'lng': lng},
       );
-      return (data['text'] as String?) ?? 'Точка на карте';
+      return _cleanAddressText((data['text'] as String?) ?? '');
     } catch (_) {
       return 'Точка на карте';
     }
@@ -234,6 +243,7 @@ class TripsService {
 
   static Future<Trip> create({
     required int childId,
+    List<int> childIds = const [],
     required String pickupText,
     required double pickupLat,
     required double pickupLng,
@@ -244,6 +254,7 @@ class TripsService {
   }) async {
     final data = await _api.post('/trips/', {
       'child': childId,
+      if (childIds.isNotEmpty) 'child_ids': childIds,
       'pickup_text': pickupText,
       'pickup_lat': pickupLat,
       'pickup_lng': pickupLng,
@@ -346,6 +357,17 @@ class DriverService {
 
   static Future<Map<String, dynamic>> me() async =>
       Map<String, dynamic>.from(await _api.get('/drivers/me/'));
+
+  static Future<Map<String, dynamic>> updatePhoto(
+    List<int> photo, {
+    String photoName = 'driver.jpg',
+  }) async {
+    final form = FormData.fromMap({
+      'photo': MultipartFile.fromBytes(photo, filename: photoName),
+    });
+    final data = await _api.patch('/auth/me/', form);
+    return Map<String, dynamic>.from(data);
+  }
 
   static Future<bool> setOnline(bool v) async {
     final d = await _api.post('/drivers/me/online/', {'is_available': v});

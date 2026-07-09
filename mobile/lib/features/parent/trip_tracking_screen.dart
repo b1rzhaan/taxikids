@@ -485,7 +485,7 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
         children: [
           Row(
             children: [
-              InitialAvatar(d.fullName, radius: 26),
+              PhotoAvatar(name: d.fullName, photoUrl: d.photo, radius: 26),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(

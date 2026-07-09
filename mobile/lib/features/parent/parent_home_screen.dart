@@ -92,15 +92,6 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final active = _trips.where((t) => !_terminal.contains(t.status)).toList();
-    final today = _trips.where((t) {
-      final d = DateTime.tryParse(t.scheduledAt)?.toLocal();
-      final now = DateTime.now();
-      return d != null &&
-          d.year == now.year &&
-          d.month == now.month &&
-          d.day == now.day;
-    }).toList();
-
     return Scaffold(
       body: SafeArea(
         child: _loading
@@ -141,32 +132,6 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                     ),
                     const SizedBox(height: 10),
                     _entry(_childrenRow(), 6),
-                    const SizedBox(height: 22),
-                    _entry(
-                      SectionHeader(
-                        'Сегодня',
-                        action: 'История',
-                        onAction: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const HistoryScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      7,
-                    ),
-                    const SizedBox(height: 10),
-                    if (today.isEmpty)
-                      _entry(_todayPlanEmpty(), 8)
-                    else
-                      ...today
-                          .take(3)
-                          .toList()
-                          .asMap()
-                          .entries
-                          .map((e) => _entry(_todayTile(e.value), 8 + e.key)),
                     const SizedBox(height: 22),
                     _entry(_serviceCard(), 10),
                     const SizedBox(height: 22),
@@ -639,6 +604,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
     );
   }
 
+  // ignore: unused_element
   Widget _todayPlanEmpty() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -713,6 +679,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
     );
   }
 
+  // ignore: unused_element
   Widget _todayTile(Trip t) {
     final d = DateTime.tryParse(t.scheduledAt)?.toLocal();
     final time = d != null ? DateFormat('HH:mm').format(d) : '';

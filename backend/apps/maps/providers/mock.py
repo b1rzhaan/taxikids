@@ -48,7 +48,7 @@ class MockMapProvider(MapProvider):
         return GeocodeResult(text=text, point=point)
 
     def reverse_geocode(self, lat: float, lng: float) -> str | None:
-        return f"Демо-адрес ({lat:.5f}, {lng:.5f})"
+        return f"Точка на карте ({lat:.5f}, {lng:.5f})"
 
     def suggest(self, text: str) -> list[GeocodeResult]:
         q = (text or "").strip().lower()

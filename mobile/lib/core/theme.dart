@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'config.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// «Детское такси» design tokens — light theme, yellow taxi accent.
@@ -205,7 +206,14 @@ class PhotoAvatar extends StatelessWidget {
     return CircleAvatar(
       radius: radius,
       backgroundColor: AppColors.brandSoft,
-      backgroundImage: NetworkImage(url),
+      backgroundImage: NetworkImage(_absoluteMediaUrl(url)),
     );
+  }
+
+  String _absoluteMediaUrl(String url) {
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    final origin = AppConfig.apiBase.replaceFirst(RegExp(r'/api/?$'), '');
+    if (url.startsWith('/')) return '$origin$url';
+    return '$origin/$url';
   }
 }
