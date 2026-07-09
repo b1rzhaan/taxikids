@@ -83,16 +83,17 @@ class AppBottomNav extends StatelessWidget {
               ),
             ),
             if (hasCenter)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 12,
-                child: Material(
-                  color: Colors.transparent,
-                  child: Center(
-                    child: _CenterButton(icon: centerIcon, onTap: onCenter!),
-                  ),
-                ),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  return Positioned(
+                    left: (constraints.maxWidth - 64) / 2,
+                    bottom: 12,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: _CenterButton(icon: centerIcon, onTap: onCenter!),
+                    ),
+                  );
+                },
               ),
           ],
         ),
