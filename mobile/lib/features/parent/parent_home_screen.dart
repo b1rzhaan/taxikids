@@ -22,6 +22,8 @@ class ParentHomeScreen extends StatefulWidget {
 
 class _ParentHomeScreenState extends State<ParentHomeScreen> {
   String _name = '';
+  String _photo = '';
+  int _photoVersion = 0;
   List<Child> _children = [];
   List<Trip> _trips = [];
   bool _loading = true;
@@ -63,6 +65,8 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
     try {
       final me = await AuthService.me();
       _name = (me['full_name'] as String?)?.split(' ').first ?? '';
+      _photo = (me['photo'] as String?) ?? '';
+      _photoVersion = DateTime.now().millisecondsSinceEpoch;
       _children = await ChildrenService.list();
       _trips = await TripsService.list();
     } catch (_) {}
@@ -179,7 +183,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
   Widget _header() {
     return Row(
       children: [
-        InitialAvatar(_name.isEmpty ? 'Р' : _name, radius: 24),
+        _profileAvatar(),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -202,6 +206,23 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
         const NotificationBell(),
       ],
     );
+  }
+
+  Widget _profileAvatar() {
+    if (_photo.isNotEmpty) {
+      return CircleAvatar(
+        radius: 24,
+        backgroundColor: AppColors.brandSoft,
+        backgroundImage: NetworkImage(_photoWithVersion),
+      );
+    }
+    return InitialAvatar(_name.isEmpty ? 'Р' : _name, radius: 24);
+  }
+
+  String get _photoWithVersion {
+    if (_photo.isEmpty || _photoVersion == 0) return _photo;
+    final separator = _photo.contains('?') ? '&' : '?';
+    return '$_photo${separator}v=$_photoVersion';
   }
 
   Widget _entry(Widget child, int index) {

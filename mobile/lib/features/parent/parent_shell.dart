@@ -19,15 +19,22 @@ class _ParentShellState extends State<ParentShell> {
   Key _homeKey = UniqueKey();
 
   List<Widget> get _pages => [
-        ParentHomeScreen(key: _homeKey),
-        const HistoryScreen(),
-        const WalletScreen(),
-        const ProfileScreen(),
-      ];
+    ParentHomeScreen(key: _homeKey),
+    const HistoryScreen(),
+    const WalletScreen(),
+    ProfileScreen(onProfileChanged: _refreshHome),
+  ];
+
+  void _refreshHome() {
+    if (!mounted) return;
+    setState(() => _homeKey = UniqueKey());
+  }
 
   Future<void> _order() async {
     final created = await Navigator.push(
-        context, MaterialPageRoute(builder: (_) => const CreateTripScreen()));
+      context,
+      MaterialPageRoute(builder: (_) => const CreateTripScreen()),
+    );
     if (created != null && mounted) {
       // Refresh the home tab and jump to it.
       setState(() {
@@ -50,8 +57,11 @@ class _ParentShellState extends State<ParentShell> {
         destinations: const [
           NavDest(Icons.home_outlined, Icons.home, 'Главная'),
           NavDest(Icons.receipt_long_outlined, Icons.receipt_long, 'Поездки'),
-          NavDest(Icons.account_balance_wallet_outlined,
-              Icons.account_balance_wallet, 'Кошелёк'),
+          NavDest(
+            Icons.account_balance_wallet_outlined,
+            Icons.account_balance_wallet,
+            'Кошелёк',
+          ),
           NavDest(Icons.person_outline, Icons.person, 'Профиль'),
         ],
       ),

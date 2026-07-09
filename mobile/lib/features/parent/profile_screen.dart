@@ -13,7 +13,9 @@ import 'history_screen.dart';
 import 'messages_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final VoidCallback? onProfileChanged;
+
+  const ProfileScreen({super.key, this.onProfileChanged});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -359,7 +361,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         },
       ),
     );
-    if (saved == true) _load();
+    if (saved == true) {
+      await _load();
+      widget.onProfileChanged?.call();
+    }
   }
 
   Widget _circle(IconData icon, String label, VoidCallback onTap) {
