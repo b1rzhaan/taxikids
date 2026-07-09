@@ -72,7 +72,7 @@ class MockMapProvider(MapProvider):
         seed = (abs(origin.lat) + abs(dest.lng)) * 1000
         traffic_factor = 1.0 + (int(seed) % 60) / 100.0
         duration_traffic_s = int(duration_s * traffic_factor)
-        polyline = [[origin.lat, origin.lng], [dest.lat, dest.lng]]
+        polyline = _city_fallback_polyline(origin, dest)
         return Route(
             distance_m=distance_m,
             duration_s=duration_s,
@@ -81,3 +81,25 @@ class MockMapProvider(MapProvider):
             provider=self.name,
             has_traffic=True,
         )
+
+
+def _city_fallback_polyline(origin: Point, dest: Point) -> list[list[float]]:
+    """Road-like fallback when a paid routing provider is unavailable.
+
+    It is not a real street route, but it avoids the misleading single straight
+    segment and gives operators/parents a more honest demo trajectory.
+    """
+    mid_lat = (origin.lat + dest.lat) / 2
+    mid_lng = (origin.lng + dest.lng) / 2
+    lat_delta = dest.lat - origin.lat
+    lng_delta = dest.lng - origin.lng
+    bend_lat = max(min(abs(lng_delta) * 0.18, 0.018), 0.004)
+    bend_lng = max(min(abs(lat_delta) * 0.18, 0.018), 0.004)
+    sign = 1 if (origin.lat + origin.lng) < (dest.lat + dest.lng) else -1
+    return [
+        [origin.lat, origin.lng],
+        [origin.lat + lat_delta * 0.18, origin.lng],
+        [mid_lat + bend_lat * sign, mid_lng - bend_lng * sign],
+        [dest.lat - lat_delta * 0.18, dest.lng],
+        [dest.lat, dest.lng],
+    ]

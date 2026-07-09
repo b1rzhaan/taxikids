@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
-import 'dart:io' show Platform;
 
 class AppConfig {
+  static const _productionApi = 'https://kidstransfer-api.onrender.com/api';
+  static const _productionWs = 'wss://kidstransfer-api.onrender.com';
+
   /// Production base URL, injected at build time:
   ///   flutter build apk --release --dart-define=API_BASE=https://xxx.onrender.com/api
   static const _envApi = String.fromEnvironment('API_BASE');
@@ -9,17 +11,13 @@ class AppConfig {
 
   /// Base URL of the Django API.
   ///
-  /// - `--dart-define=API_BASE=...` (release / real device) wins.
-  /// - Web / desktop  → localhost
-  /// - Android emulator → 10.0.2.2 (host machine loopback)
+  /// - `--dart-define=API_BASE=...` wins for local/dev overrides.
+  /// - Otherwise use the deployed API even in debug builds, so emulator and
+  ///   real-phone testing don't silently point to 10.0.2.2.
   static String get apiBase {
     if (_envApi.isNotEmpty) return _envApi;
-    if (kReleaseMode) return 'https://kidstransfer-api.onrender.com/api';
-    if (kIsWeb) return 'http://localhost:8000/api';
-    try {
-      if (Platform.isAndroid) return 'http://10.0.2.2:8000/api';
-    } catch (_) {}
-    return 'http://localhost:8000/api';
+    if (kIsWeb && kDebugMode) return 'http://localhost:8000/api';
+    return _productionApi;
   }
 
   static String get wsBase {
@@ -31,11 +29,7 @@ class AppConfig {
           .replaceFirst('http://', 'ws://')
           .replaceFirst(RegExp(r'/api/?$'), '');
     }
-    if (kReleaseMode) return 'wss://kidstransfer-api.onrender.com';
-    if (kIsWeb) return 'ws://localhost:8000';
-    try {
-      if (Platform.isAndroid) return 'ws://10.0.2.2:8000';
-    } catch (_) {}
-    return 'ws://localhost:8000';
+    if (kIsWeb && kDebugMode) return 'ws://localhost:8000';
+    return _productionWs;
   }
 }

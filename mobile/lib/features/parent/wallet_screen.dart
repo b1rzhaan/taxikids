@@ -6,6 +6,7 @@ import '../../core/theme.dart';
 import '../../services/services.dart';
 import 'bank_checkout_screen.dart';
 import 'halyk_checkout_screen.dart';
+import 'hosted_checkout_screen.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -51,15 +52,40 @@ class _WalletScreenState extends State<WalletScreen> {
     try {
       final res = await WalletService.topUpCreate(amount);
       if (!mounted) return;
-      if (res['provider'] == 'halyk' && res['payment_object'] != null) {
+      final provider = '${res['provider']}';
+      final redirectUrl = '${res['redirect_url'] ?? ''}';
+      if (provider == 'stripe' && redirectUrl.isNotEmpty) {
+        final meta = Map<String, dynamic>.from(res['payment_object'] ?? {});
+        final ref = '${res['ref']}';
+        final providerRef = '${res['provider_ref'] ?? ref}';
+        paid =
+            (await Navigator.push<bool>(
+              context,
+              MaterialPageRoute(
+                builder: (_) => HostedCheckoutScreen(
+                  title: 'Stripe test checkout',
+                  pageUrl: redirectUrl,
+                  successPrefix: '${meta['success_prefix']}',
+                  failPrefix: '${meta['cancel_prefix']}',
+                  onSuccess: () async =>
+                      (await WalletService.topUpCheckout(
+                        ref,
+                        providerRef: providerRef,
+                      )) ==
+                      'success',
+                ),
+              ),
+            )) ==
+            true;
+      } else if (provider == 'halyk' && res['payment_object'] != null) {
         final po = Map<String, dynamic>.from(res['payment_object']);
         final ref = '${res['ref']}';
-        paid = (await Navigator.push<bool>(
+        paid =
+            (await Navigator.push<bool>(
               context,
               MaterialPageRoute(
                 builder: (_) => HalykCheckoutScreen(
-                  pageUrl:
-                      '${AppConfig.apiBase}/wallet/topup/halyk/page/$ref/',
+                  pageUrl: '${AppConfig.apiBase}/wallet/topup/halyk/page/$ref/',
                   backLink: '${po['backLink']}',
                   failLink: '${po['failureBackLink']}',
                   onSuccess: () async =>
@@ -69,24 +95,28 @@ class _WalletScreenState extends State<WalletScreen> {
             )) ==
             true;
       } else {
-        paid = (await Navigator.push<bool>(
+        paid =
+            (await Navigator.push<bool>(
               context,
               MaterialPageRoute(
-                  builder: (_) =>
-                      BankCheckoutScreen(amount: amount, ref: '${res['ref']}')),
+                builder: (_) =>
+                    BankCheckoutScreen(amount: amount, ref: '${res['ref']}'),
+              ),
             )) ==
             true;
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(ApiClient.errorMessage(e))));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(ApiClient.errorMessage(e))));
       }
     }
     if (paid && mounted) {
       _load();
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Баланс пополнен')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Баланс пополнен')));
     }
   }
 
@@ -96,14 +126,17 @@ class _WalletScreenState extends State<WalletScreen> {
       builder: (_) => AlertDialog(
         title: Text(plan['name']),
         content: Text(
-            'Списать ${_money.format(plan['price'])} ₸ с баланса за абонемент на ${plan['trips_count']} поездок?'),
+          'Списать ${_money.format(plan['price'])} ₸ с баланса за абонемент на ${plan['trips_count']} поездок?',
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Отмена')),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Отмена'),
+          ),
           ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Купить')),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Купить'),
+          ),
         ],
       ),
     );
@@ -113,8 +146,9 @@ class _WalletScreenState extends State<WalletScreen> {
       _load();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(ApiClient.errorMessage(e))));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(ApiClient.errorMessage(e))));
       }
     }
   }
@@ -124,7 +158,9 @@ class _WalletScreenState extends State<WalletScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Финансы')),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.brand))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.brand),
+            )
           : RefreshIndicator(
               onRefresh: _load,
               child: ListView(
@@ -150,8 +186,10 @@ class _WalletScreenState extends State<WalletScreen> {
                   if (_tx.isEmpty)
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 12),
-                      child: Text('Пока нет операций',
-                          style: TextStyle(color: AppColors.muted)),
+                      child: Text(
+                        'Пока нет операций',
+                        style: TextStyle(color: AppColors.muted),
+                      ),
                     )
                   else
                     ..._tx.map(_txTile),
@@ -162,10 +200,12 @@ class _WalletScreenState extends State<WalletScreen> {
   }
 
   Widget _sectionTitle(String t) => Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Text(t,
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-      );
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Text(
+      t,
+      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+    ),
+  );
 
   Widget _balanceCard() {
     return Container(
@@ -184,19 +224,26 @@ class _WalletScreenState extends State<WalletScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Баланс кошелька',
-                  style: TextStyle(fontWeight: FontWeight.w600)),
+              const Text(
+                'Баланс кошелька',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
               const Icon(Icons.account_balance_wallet, color: AppColors.ink),
             ],
           ),
           const SizedBox(height: 8),
-          Text('${_money.format(_balance)} ₸',
-              style: const TextStyle(fontSize: 34, fontWeight: FontWeight.w800)),
+          Text(
+            '${_money.format(_balance)} ₸',
+            style: const TextStyle(fontSize: 34, fontWeight: FontWeight.w800),
+          ),
           const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.surface2, foregroundColor: AppColors.ink),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.surface2,
+                foregroundColor: AppColors.ink,
+              ),
               onPressed: _topUp,
               icon: const Icon(Icons.add),
               label: const Text('Пополнить через банк'),
@@ -208,14 +255,16 @@ class _WalletScreenState extends State<WalletScreen> {
   }
 
   Widget _paymentMethod() => Card(
-        child: ListTile(
-          leading: const Icon(Icons.credit_card, color: AppColors.brandDark),
-          title: const Text('Visa •••• 4567',
-              style: TextStyle(fontWeight: FontWeight.w700)),
-          subtitle: const Text('Основная карта'),
-          trailing: const Icon(Icons.check_circle, color: AppColors.success),
-        ),
-      );
+    child: ListTile(
+      leading: const Icon(Icons.credit_card, color: AppColors.brandDark),
+      title: const Text(
+        'Visa •••• 4567',
+        style: TextStyle(fontWeight: FontWeight.w700),
+      ),
+      subtitle: const Text('Основная карта'),
+      trailing: const Icon(Icons.check_circle, color: AppColors.success),
+    ),
+  );
 
   Widget _activeSubCard(dynamic s) {
     final plan = s['plan'] ?? {};
@@ -223,28 +272,35 @@ class _WalletScreenState extends State<WalletScreen> {
       color: AppColors.brandSoft,
       child: ListTile(
         leading: const Text('🎫', style: TextStyle(fontSize: 26)),
-        title: Text(plan['name'] ?? 'Абонемент',
-            style: const TextStyle(fontWeight: FontWeight.w700)),
+        title: Text(
+          plan['name'] ?? 'Абонемент',
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
         subtitle: Text(
-            'Осталось поездок: ${s['trips_remaining']} · до ${s['valid_until']}'),
+          'Осталось поездок: ${s['trips_remaining']} · до ${s['valid_until']}',
+        ),
       ),
     );
   }
 
   Widget _planCard(dynamic p) => Card(
-        child: ListTile(
-          title: Text(p['name'],
-              style: const TextStyle(fontWeight: FontWeight.w700)),
-          subtitle: Text(
-              '${p['trips_count']} поездок · ${_money.format(p['price_per_trip'])} ₸/поездка'),
-          trailing: ElevatedButton(
-            onPressed: () => _buyPlan(p as Map),
-            style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 14)),
-            child: Text('${_money.format(p['price'])} ₸'),
-          ),
+    child: ListTile(
+      title: Text(
+        p['name'],
+        style: const TextStyle(fontWeight: FontWeight.w700),
+      ),
+      subtitle: Text(
+        '${p['trips_count']} поездок · ${_money.format(p['price_per_trip'])} ₸/поездка',
+      ),
+      trailing: ElevatedButton(
+        onPressed: () => _buyPlan(p as Map),
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
         ),
-      );
+        child: Text('${_money.format(p['price'])} ₸'),
+      ),
+    ),
+  );
 
   Widget _txTile(dynamic t) {
     final amt = num.tryParse('${t['amount']}') ?? 0;
@@ -252,17 +308,21 @@ class _WalletScreenState extends State<WalletScreen> {
     return Card(
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor:
-              (positive ? AppColors.success : AppColors.danger).withValues(alpha: 0.12),
-          child: Icon(positive ? Icons.arrow_downward : Icons.arrow_upward,
-              color: positive ? AppColors.success : AppColors.danger, size: 20),
+          backgroundColor: (positive ? AppColors.success : AppColors.danger)
+              .withValues(alpha: 0.12),
+          child: Icon(
+            positive ? Icons.arrow_downward : Icons.arrow_upward,
+            color: positive ? AppColors.success : AppColors.danger,
+            size: 20,
+          ),
         ),
         title: Text(t['note'] ?? t['kind'] ?? ''),
         trailing: Text(
           '${positive ? '+' : ''}${_money.format(amt)} ₸',
           style: TextStyle(
-              fontWeight: FontWeight.w700,
-              color: positive ? AppColors.success : AppColors.ink),
+            fontWeight: FontWeight.w700,
+            color: positive ? AppColors.success : AppColors.ink,
+          ),
         ),
       ),
     );
@@ -282,7 +342,9 @@ class _AmountSheetState extends State<_AmountSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Container(
         decoration: const BoxDecoration(
           color: AppColors.surface,
@@ -293,18 +355,22 @@ class _AmountSheetState extends State<_AmountSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Сумма пополнения',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+            const Text(
+              'Сумма пополнения',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            ),
             const SizedBox(height: 14),
             Wrap(
               spacing: 8,
               children: _presets
-                  .map((p) => ActionChip(
-                        backgroundColor: AppColors.brandSoft,
-                        side: BorderSide.none,
-                        label: Text('$p ₸'),
-                        onPressed: () => setState(() => _c.text = '$p'),
-                      ))
+                  .map(
+                    (p) => ActionChip(
+                      backgroundColor: AppColors.brandSoft,
+                      side: BorderSide.none,
+                      label: Text('$p ₸'),
+                      onPressed: () => setState(() => _c.text = '$p'),
+                    ),
+                  )
                   .toList(),
             ),
             const SizedBox(height: 12),

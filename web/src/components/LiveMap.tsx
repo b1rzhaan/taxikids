@@ -26,6 +26,23 @@ function FitPath({ path }: { path: [number, number][] }) {
   return null;
 }
 
+function softenRoute(path: [number, number][]): [number, number][] {
+  if (path.length !== 2) return path;
+  const [a, b] = path;
+  const latDelta = b[0] - a[0];
+  const lngDelta = b[1] - a[1];
+  const sign = a[0] + a[1] < b[0] + b[1] ? 1 : -1;
+  const bendLat = Math.min(Math.max(Math.abs(lngDelta) * 0.18, 0.004), 0.018) * sign;
+  const bendLng = Math.min(Math.max(Math.abs(latDelta) * 0.18, 0.004), 0.018) * -sign;
+  return [
+    a,
+    [a[0] + latDelta * 0.18, a[1]],
+    [(a[0] + b[0]) / 2 + bendLat, (a[1] + b[1]) / 2 + bendLng],
+    [b[0] - latDelta * 0.18, b[1]],
+    b,
+  ];
+}
+
 // Fix default marker icons (Next bundling breaks the default paths).
 const icon = (color: string) =>
   L.divIcon({
@@ -87,6 +104,7 @@ export default function LiveMap({
   /** Live taxis on the line (real-time tracking). */
   taxis?: DriverLocation[];
 }) {
+  const displayPath = path ? softenRoute(path) : undefined;
   return (
     <MapContainer
       center={center}
@@ -102,6 +120,7 @@ export default function LiveMap({
         if (t.pickup_lat == null || t.dropoff_lat == null) return null;
         const a: [number, number] = [t.pickup_lat, t.pickup_lng!];
         const b: [number, number] = [t.dropoff_lat, t.dropoff_lng!];
+        const fallbackPath = softenRoute([a, b]);
         return (
           <div key={t.id}>
             <Marker position={a} icon={icon("#2563eb")}>
@@ -116,7 +135,7 @@ export default function LiveMap({
             <Marker position={b} icon={icon("#f97316")}>
               <Popup>Назначение: {t.dropoff_text}</Popup>
             </Marker>
-            <Polyline positions={[a, b]} color="#FFCE00" weight={4} />
+            <Polyline positions={fallbackPath} color="#FFCE00" weight={4} />
           </div>
         );
       })}
@@ -172,16 +191,16 @@ export default function LiveMap({
             </Marker>
           )
       )}
-      {path && path.length > 1 && (
+      {displayPath && displayPath.length > 1 && (
         <>
           <Polyline
-            positions={path}
+            positions={displayPath}
             color="#15161A"
             weight={7}
             opacity={0.25}
           />
-          <Polyline positions={path} color="#F5B800" weight={4.5} />
-          <FitPath path={path} />
+          <Polyline positions={displayPath} color="#F5B800" weight={4.5} />
+          <FitPath path={displayPath} />
         </>
       )}
     </MapContainer>

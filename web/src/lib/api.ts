@@ -1,7 +1,8 @@
 import type { Session } from "./types";
 
 const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000/api";
+  process.env.NEXT_PUBLIC_API_BASE ||
+  "https://kidstransfer-api.onrender.com/api";
 const STORAGE_KEY = "kt_session";
 
 export function getSession(): Session | null {

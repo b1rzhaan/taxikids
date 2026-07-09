@@ -4,8 +4,9 @@ import '../models/models.dart';
 
 final _api = ApiClient.instance;
 
-List _results(dynamic data) =>
-    data is Map && data.containsKey('results') ? data['results'] as List : (data as List);
+List _results(dynamic data) => data is Map && data.containsKey('results')
+    ? data['results'] as List
+    : (data as List);
 
 class AuthService {
   static Future<Session> login(String email, String password) async {
@@ -61,16 +62,20 @@ class AuthService {
       'car_make': carMake,
       'car_model': carModel,
       'car_color': carColor,
-      if (carMileage != null) 'car_mileage': carMileage,
+      ...?(carMileage == null ? null : {'car_mileage': carMileage}),
       'car_plate': carPlate,
       if (carPhoto != null)
         'car_photo': MultipartFile.fromBytes(carPhoto, filename: 'car.jpg'),
       if (licensePhoto != null)
-        'license_photo':
-            MultipartFile.fromBytes(licensePhoto, filename: 'license.jpg'),
+        'license_photo': MultipartFile.fromBytes(
+          licensePhoto,
+          filename: 'license.jpg',
+        ),
       if (idCardPhoto != null)
-        'id_card_photo':
-            MultipartFile.fromBytes(idCardPhoto, filename: 'id.jpg'),
+        'id_card_photo': MultipartFile.fromBytes(
+          idCardPhoto,
+          filename: 'id.jpg',
+        ),
     });
     final data = await _api.post('/auth/register-driver/', form);
     return Session.fromJson(Map<String, dynamic>.from(data));
@@ -120,7 +125,10 @@ class ChildrenService {
 
   /// Uploads/replaces the child's photo (multipart PATCH).
   static Future<Child> uploadPhoto(
-      int id, List<int> bytes, String filename) async {
+    int id,
+    List<int> bytes,
+    String filename,
+  ) async {
     final form = FormData.fromMap({
       'photo': MultipartFile.fromBytes(bytes, filename: filename),
     });
@@ -153,7 +161,10 @@ class MapsService {
 
   static Future<String> reverse(double lat, double lng) async {
     try {
-      final data = await _api.get('/maps/reverse/', query: {'lat': lat, 'lng': lng});
+      final data = await _api.get(
+        '/maps/reverse/',
+        query: {'lat': lat, 'lng': lng},
+      );
       return (data['text'] as String?) ?? 'Точка на карте';
     } catch (_) {
       return 'Точка на карте';
@@ -173,7 +184,8 @@ class MapsService {
     });
     return ((data['polyline'] ?? []) as List)
         .map<List<double>>(
-            (p) => [(p[0] as num).toDouble(), (p[1] as num).toDouble()])
+          (p) => [(p[0] as num).toDouble(), (p[1] as num).toDouble()],
+        )
         .toList();
   }
 
@@ -238,8 +250,15 @@ class TripsService {
     return Trip.fromJson(Map<String, dynamic>.from(data));
   }
 
-  static Future<Trip> changeStatus(int id, String event, {String note = ''}) async {
-    final data = await _api.post('/trips/$id/status/', {'event': event, 'note': note});
+  static Future<Trip> changeStatus(
+    int id,
+    String event, {
+    String note = '',
+  }) async {
+    final data = await _api.post('/trips/$id/status/', {
+      'event': event,
+      'note': note,
+    });
     return Trip.fromJson(Map<String, dynamic>.from(data));
   }
 
@@ -283,15 +302,17 @@ class PaymentsService {
 
   /// Confirm a Halyk ePay payment after the widget reports success.
   static Future<String> halykConfirm(String invoiceId) async {
-    final data =
-        await _api.post('/payments/halyk/confirm/', {'invoice_id': invoiceId});
+    final data = await _api.post('/payments/halyk/confirm/', {
+      'invoice_id': invoiceId,
+    });
     return data['status'] as String;
   }
 
   /// Confirm a Stripe Checkout Session after the hosted page returns.
   static Future<String> stripeConfirm(String sessionId) async {
-    final data =
-        await _api.post('/payments/stripe/confirm/', {'session_id': sessionId});
+    final data = await _api.post('/payments/stripe/confirm/', {
+      'session_id': sessionId,
+    });
     return data['status'] as String;
   }
 
@@ -344,7 +365,10 @@ class SupportService {
   static Future<List> myRequests() async =>
       _results(await _api.get('/notifications/emergency/'));
 
-  static Future<void> send(String message, {String type = 'call_request'}) async {
+  static Future<void> send(
+    String message, {
+    String type = 'call_request',
+  }) async {
     await _api.post('/notifications/emergency/', {
       'type': type,
       'message': message,
@@ -356,9 +380,9 @@ class AddressService {
   /// Recently used addresses (most recent first).
   static Future<List<PickedPoint>> recent() async {
     final data = await _api.get('/auth/addresses/');
-    return _results(data)
-        .map((e) => PickedPoint.fromJson(Map<String, dynamic>.from(e)))
-        .toList();
+    return _results(
+      data,
+    ).map((e) => PickedPoint.fromJson(Map<String, dynamic>.from(e))).toList();
   }
 
   static Future<void> save(PickedPoint p) async {
@@ -390,14 +414,20 @@ class WalletService {
   }
 
   /// Mock bank checkout callback (success/fail).
-  static Future<String> topUpCheckout(String ref, {bool success = true}) async {
+  static Future<String> topUpCheckout(
+    String ref, {
+    bool success = true,
+    String? providerRef,
+  }) async {
     final data = await _api.post(
       '/wallet/topup/checkout/?ref=$ref&status=${success ? 'success' : 'failed'}',
+      providerRef == null ? null : {'provider_ref': providerRef},
     );
     return data['status'] as String;
   }
 
-  static Future<List> plans() async => _results(await _api.get('/wallet/plans/'));
+  static Future<List> plans() async =>
+      _results(await _api.get('/wallet/plans/'));
 
   static Future<void> buySubscription(int planId) async =>
       _api.post('/wallet/subscriptions/buy/', {'plan_id': planId});

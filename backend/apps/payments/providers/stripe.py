@@ -53,26 +53,48 @@ class StripeProvider(PaymentProvider):
             raise StripeError(str(exc)) from exc
 
     def create_payment(self, trip, amount, currency, idempotency_key) -> PaymentIntent:
+        return self.create_checkout(
+            client_reference=str(trip.id),
+            amount=amount,
+            source_currency=currency,
+            idempotency_key=idempotency_key,
+            name=f"KidsTaxi trip #{trip.id}",
+            description=f"{trip.pickup_text} -> {trip.dropoff_text}",
+            metadata={"trip_id": str(trip.id)},
+        )
+
+    def create_checkout(
+        self,
+        *,
+        client_reference: str,
+        amount,
+        source_currency: str,
+        idempotency_key: str,
+        name: str,
+        description: str,
+        metadata: dict[str, str] | None = None,
+    ) -> PaymentIntent:
         stripe_currency = settings.STRIPE_CURRENCY.lower()
-        amount_minor, display_amount = self._amount_for_stripe(amount, currency)
+        amount_minor, display_amount = self._amount_for_stripe(
+            amount, source_currency
+        )
         data = {
             "mode": "payment",
-            "client_reference_id": str(trip.id),
+            "client_reference_id": client_reference,
             "success_url": settings.STRIPE_SUCCESS_URL,
             "cancel_url": settings.STRIPE_CANCEL_URL,
             "payment_method_types[0]": "card",
             "line_items[0][quantity]": "1",
             "line_items[0][price_data][currency]": stripe_currency,
             "line_items[0][price_data][unit_amount]": str(amount_minor),
-            "line_items[0][price_data][product_data][name]": f"KidsTaxi trip #{trip.id}",
-            "line_items[0][price_data][product_data][description]": (
-                f"{trip.pickup_text} -> {trip.dropoff_text}"
-            )[:255],
-            "metadata[trip_id]": str(trip.id),
+            "line_items[0][price_data][product_data][name]": name[:255],
+            "line_items[0][price_data][product_data][description]": description[:255],
             "metadata[idempotency_key]": idempotency_key,
             "metadata[source_amount]": str(amount),
-            "metadata[source_currency]": str(currency),
+            "metadata[source_currency]": str(source_currency),
         }
+        for key, value in (metadata or {}).items():
+            data[f"metadata[{key}]"] = value
         session = self._request(
             "POST",
             "/checkout/sessions",

@@ -173,7 +173,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
     return GestureDetector(
       onTap: _order,
       child: Container(
-        height: 196,
+        height: 214,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(26),
           gradient: const LinearGradient(
@@ -187,11 +187,11 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
           clipBehavior: Clip.none,
           children: [
             Positioned(
-              right: -6,
-              bottom: 6,
+              right: -2,
+              bottom: 12,
               child: Image.asset(
                 'assets/car.png',
-                height: 116,
+                height: 104,
                 fit: BoxFit.contain,
               ),
             ),
@@ -199,7 +199,6 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -241,10 +240,12 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                       ),
                     ],
                   ),
+                  const Spacer(),
                   Container(
+                    constraints: const BoxConstraints(maxWidth: 190),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 11,
+                      horizontal: 16,
+                      vertical: 10,
                     ),
                     decoration: BoxDecoration(
                       color: AppColors.brand,
@@ -253,11 +254,15 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          'Заказать поездку',
-                          style: TextStyle(
-                            color: AppColors.onBrand,
-                            fontWeight: FontWeight.w800,
+                        Flexible(
+                          child: Text(
+                            'Заказать поездку',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: AppColors.onBrand,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
                         ),
                         SizedBox(width: 6),

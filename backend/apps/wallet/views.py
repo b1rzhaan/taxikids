@@ -45,6 +45,7 @@ def topup_create(request):
         "amount": intent.amount,
         "provider": intent.provider,
         "redirect_url": redirect_url,
+        "provider_ref": (intent.raw_payload or {}).get("provider_ref", intent.ref),
         "payment_object": intent.raw_payload or None,
     })
 
@@ -74,6 +75,19 @@ def topup_checkout(request):
     """Mock bank checkout callback. POST ?ref=..&status=success|failed."""
     ref = request.query_params.get("ref") or request.data.get("ref")
     status_ = request.query_params.get("status") or request.data.get("status", "success")
+    from apps.payments.services import get_payment_provider
+
+    from .models import TopUpIntent
+
+    intent = TopUpIntent.objects.filter(ref=ref).first()
+    if intent and intent.provider == "stripe":
+        session_id = request.data.get("provider_ref") or ref
+        provider = get_payment_provider()
+        if not hasattr(provider, "verify_status"):
+            raise ValidationError({"detail": "Stripe provider is not enabled"})
+        status_ = provider.verify_status(str(session_id))
+        if status_ == "pending":
+            return Response({"status": intent.status})
     intent = confirm_topup(ref, status_ == "success")
     if intent is None:
         return Response({"detail": "unknown top-up"}, status=404)

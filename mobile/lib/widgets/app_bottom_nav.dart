@@ -38,9 +38,10 @@ class AppBottomNav extends StatelessWidget {
       for (var i = 0; i < destinations.length; i++)
         Expanded(
           child: NavigationItem(
-              dest: destinations[i],
-              active: index == i,
-              onTap: () => onTap(i)),
+            dest: destinations[i],
+            active: index == i,
+            onTap: () => onTap(i),
+          ),
         ),
     ];
     // Insert the gap for the floating center button in the middle.
@@ -55,6 +56,22 @@ class AppBottomNav extends StatelessWidget {
         child: Stack(
           clipBehavior: Clip.none,
           children: [
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      AppColors.bg.withValues(alpha: 0),
+                      AppColors.bg.withValues(alpha: 0.92),
+                      AppColors.bg,
+                    ],
+                    stops: const [0, 0.42, 1],
+                  ),
+                ),
+              ),
+            ),
             Positioned(
               left: 18,
               right: 18,
@@ -84,7 +101,8 @@ class AppBottomNav extends StatelessWidget {
                 right: 0,
                 bottom: 44,
                 child: Center(
-                    child: _CenterButton(icon: centerIcon, onTap: onCenter!)),
+                  child: _CenterButton(icon: centerIcon, onTap: onCenter!),
+                ),
               ),
           ],
         ),
@@ -120,16 +138,20 @@ class NavigationItem extends StatelessWidget {
               scale: active ? 1.12 : 1.0,
               duration: const Duration(milliseconds: 260),
               curve: Curves.easeOut,
-              child: Icon(active ? dest.activeIcon : dest.icon,
-                  color: color, size: 24),
+              child: Icon(
+                active ? dest.activeIcon : dest.icon,
+                color: color,
+                size: 24,
+              ),
             ),
             const SizedBox(height: 4),
             AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 260),
               style: TextStyle(
-                  color: color,
-                  fontSize: 10.5,
-                  fontWeight: active ? FontWeight.w700 : FontWeight.w500),
+                color: color,
+                fontSize: 10.5,
+                fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+              ),
               child: Text(dest.label),
             ),
           ],

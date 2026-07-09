@@ -5,6 +5,7 @@ import '../../core/api_client.dart';
 import '../../core/theme.dart';
 import '../../models/models.dart';
 import '../../services/services.dart';
+import '../../widgets/ui.dart';
 
 /// Add a new child, or edit an existing one (pass [child]). Supports a photo.
 class AddChildScreen extends StatefulWidget {
@@ -21,8 +22,9 @@ class _AddChildScreenState extends State<AddChildScreen> {
   late final _name = TextEditingController(text: widget.child?.fullName ?? '');
   late final _school = TextEditingController(text: widget.child?.school ?? '');
   late final _grade = TextEditingController(text: widget.child?.grade ?? '');
-  late final _note =
-      TextEditingController(text: widget.child?.noteForDriver ?? '');
+  late final _note = TextEditingController(
+    text: widget.child?.noteForDriver ?? '',
+  );
   DateTime? _birth;
   Uint8List? _photoBytes; // newly picked photo (not yet uploaded)
   String? _photoName;
@@ -37,8 +39,11 @@ class _AddChildScreenState extends State<AddChildScreen> {
   }
 
   Future<void> _pickPhoto() async {
-    final x = await ImagePicker()
-        .pickImage(source: ImageSource.gallery, maxWidth: 800, imageQuality: 85);
+    final x = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 800,
+      imageQuality: 85,
+    );
     if (x == null) return;
     final bytes = await x.readAsBytes();
     setState(() {
@@ -79,7 +84,10 @@ class _AddChildScreenState extends State<AddChildScreen> {
       }
       if (_photoBytes != null) {
         await ChildrenService.uploadPhoto(
-            saved.id, _photoBytes!, _photoName ?? 'photo.jpg');
+          saved.id,
+          _photoBytes!,
+          _photoName ?? 'photo.jpg',
+        );
       }
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
@@ -97,12 +105,16 @@ class _AddChildScreenState extends State<AddChildScreen> {
         content: Text('${widget.child!.fullName} будет удалён из профиля.'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Отмена')),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Отмена'),
+          ),
           TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Удалить',
-                  style: TextStyle(color: AppColors.danger))),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'Удалить',
+              style: TextStyle(color: AppColors.danger),
+            ),
+          ),
         ],
       ),
     );
@@ -124,8 +136,9 @@ class _AddChildScreenState extends State<AddChildScreen> {
         actions: [
           if (widget.isEdit)
             IconButton(
-                onPressed: _delete,
-                icon: const Icon(Icons.delete_outline, color: AppColors.danger)),
+              onPressed: _delete,
+              icon: const Icon(Icons.delete_outline, color: AppColors.danger),
+            ),
         ],
       ),
       body: ListView(
@@ -146,16 +159,21 @@ class _AddChildScreenState extends State<AddChildScreen> {
                       image: _photoBytes != null
                           ? DecorationImage(
                               image: MemoryImage(_photoBytes!),
-                              fit: BoxFit.cover)
+                              fit: BoxFit.cover,
+                            )
                           : (existingPhoto != null
-                              ? DecorationImage(
-                                  image: NetworkImage(existingPhoto),
-                                  fit: BoxFit.cover)
-                              : null),
+                                ? DecorationImage(
+                                    image: NetworkImage(existingPhoto),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null),
                     ),
                     child: (_photoBytes == null && existingPhoto == null)
-                        ? const Icon(Icons.child_care,
-                            color: AppColors.muted, size: 40)
+                        ? const Icon(
+                            Icons.child_care,
+                            color: AppColors.muted,
+                            size: 40,
+                          )
                         : null,
                   ),
                   Positioned(
@@ -169,8 +187,11 @@ class _AddChildScreenState extends State<AddChildScreen> {
                         shape: BoxShape.circle,
                         border: Border.all(color: AppColors.bg, width: 3),
                       ),
-                      child: const Icon(Icons.photo_camera,
-                          color: AppColors.onBrand, size: 17),
+                      child: const Icon(
+                        Icons.photo_camera,
+                        color: AppColors.onBrand,
+                        size: 17,
+                      ),
                     ),
                   ),
                 ],
@@ -193,19 +214,22 @@ class _AddChildScreenState extends State<AddChildScreen> {
           TextField(
             controller: _grade,
             decoration: const InputDecoration(
-                labelText: 'Класс', hintText: 'напр. 4 класс'),
+              labelText: 'Класс',
+              hintText: 'напр. 4 класс',
+            ),
           ),
           const SizedBox(height: 14),
           TextField(
             controller: _note,
             maxLines: 3,
             decoration: const InputDecoration(
-                labelText: 'Комментарий для водителя',
-                hintText: 'Например: забирать у второго подъезда'),
+              labelText: 'Комментарий для водителя',
+              hintText: 'Например: забирать у второго подъезда',
+            ),
           ),
           if (_error != null) ...[
             const SizedBox(height: 12),
-            Text(_error!, style: const TextStyle(color: AppColors.danger)),
+            InlineError(_error!),
           ],
           const SizedBox(height: 20),
           SizedBox(
@@ -217,7 +241,10 @@ class _AddChildScreenState extends State<AddChildScreen> {
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: AppColors.onBrand))
+                        strokeWidth: 2,
+                        color: AppColors.onBrand,
+                      ),
+                    )
                   : Text(widget.isEdit ? 'Сохранить' : 'Добавить'),
             ),
           ),
@@ -244,17 +271,21 @@ class _AddChildScreenState extends State<AddChildScreen> {
           color: AppColors.surface2,
           borderRadius: BorderRadius.circular(16),
         ),
-        child: Row(children: [
-          const Icon(Icons.cake_outlined, color: AppColors.muted, size: 20),
-          const SizedBox(width: 12),
-          Text(
+        child: Row(
+          children: [
+            const Icon(Icons.cake_outlined, color: AppColors.muted, size: 20),
+            const SizedBox(width: 12),
+            Text(
               _birth == null
                   ? 'Дата рождения (необязательно)'
                   : '${_birth!.day.toString().padLeft(2, '0')}.${_birth!.month.toString().padLeft(2, '0')}.${_birth!.year}',
               style: TextStyle(
-                  color: _birth == null ? AppColors.muted : AppColors.ink,
-                  fontWeight: FontWeight.w600)),
-        ]),
+                color: _birth == null ? AppColors.muted : AppColors.ink,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
