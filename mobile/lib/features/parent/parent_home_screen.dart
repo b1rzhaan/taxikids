@@ -81,58 +81,69 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
             : RefreshIndicator(
                 onRefresh: _load,
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 28),
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 18),
                   children: [
-                    _header(),
+                    _entry(_header(), 0),
                     const SizedBox(height: 18),
-                    _hero(),
-                    const SizedBox(height: 24),
+                    _entry(_hero(activeCount: active.length), 1),
+                    const SizedBox(height: 14),
+                    _entry(_insightStrip(active.length, today.length), 2),
+                    const SizedBox(height: 22),
                     if (active.isNotEmpty) ...[
-                      const SectionHeader('Текущая поездка'),
+                      _entry(const SectionHeader('Текущая поездка'), 3),
                       const SizedBox(height: 10),
-                      _currentTrip(active.first),
-                      const SizedBox(height: 24),
+                      _entry(_currentTrip(active.first), 4),
+                      const SizedBox(height: 22),
                     ],
-                    SectionHeader(
-                      'Мои дети',
-                      action: 'Все',
-                      onAction: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const ChildrenScreen(),
-                          ),
-                        );
-                      },
+                    _entry(
+                      SectionHeader(
+                        'Мои дети',
+                        action: 'Все',
+                        onAction: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const ChildrenScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      5,
                     ),
                     const SizedBox(height: 10),
-                    _childrenRow(),
-                    const SizedBox(height: 24),
-                    SectionHeader(
-                      'Сегодня',
-                      action: 'История',
-                      onAction: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const HistoryScreen(),
-                          ),
-                        );
-                      },
+                    _entry(_childrenRow(), 6),
+                    const SizedBox(height: 22),
+                    _entry(
+                      SectionHeader(
+                        'Сегодня',
+                        action: 'История',
+                        onAction: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const HistoryScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      7,
                     ),
                     const SizedBox(height: 10),
                     if (today.isEmpty)
-                      const EmptyState(
-                        icon: Icons.event_available_outlined,
-                        title: 'На сегодня поездок нет',
-                        subtitle: 'Запланируйте поездку — она появится здесь.',
-                      )
+                      _entry(_todayPlanEmpty(), 8)
                     else
-                      ...today.take(3).map(_todayTile),
-                    const SizedBox(height: 24),
-                    const SectionHeader('Быстрые действия'),
+                      ...today
+                          .take(3)
+                          .toList()
+                          .asMap()
+                          .entries
+                          .map((e) => _entry(_todayTile(e.value), 8 + e.key)),
+                    const SizedBox(height: 22),
+                    _entry(_serviceCard(), 10),
+                    const SizedBox(height: 22),
+                    _entry(const SectionHeader('Быстрые действия'), 11),
                     const SizedBox(height: 10),
-                    _quickActions(),
+                    _entry(_quickActions(), 12),
                   ],
                 ),
               ),
@@ -168,31 +179,85 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
     );
   }
 
+  Widget _entry(Widget child, int index) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: Duration(milliseconds: 380 + index * 35),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, 14 * (1 - value)),
+            child: child,
+          ),
+        );
+      },
+      child: child,
+    );
+  }
+
   /// The centrepiece: a big yellow-accented "order a ride" card with the taxi.
-  Widget _hero() {
+  Widget _hero({required int activeCount}) {
     return GestureDetector(
       onTap: _order,
       child: Container(
-        height: 214,
+        height: 224,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(26),
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF282513), Color(0xFF16191F)],
+            colors: [Color(0xFF2B250B), Color(0xFF151515)],
           ),
           border: Border.all(color: AppColors.brand.withValues(alpha: 0.35)),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.brand.withValues(alpha: 0.12),
+              blurRadius: 26,
+              offset: const Offset(0, 12),
+            ),
+          ],
         ),
         child: Stack(
-          clipBehavior: Clip.none,
+          clipBehavior: Clip.hardEdge,
           children: [
             Positioned(
-              right: -2,
-              bottom: 12,
-              child: Image.asset(
-                'assets/car.png',
-                height: 104,
-                fit: BoxFit.contain,
+              right: -18,
+              bottom: 14,
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: 1),
+                duration: const Duration(milliseconds: 900),
+                curve: Curves.easeOutBack,
+                builder: (context, value, child) {
+                  return Transform.translate(
+                    offset: Offset(24 * (1 - value), 0),
+                    child: Transform.scale(
+                      scale: 0.94 + value * 0.06,
+                      child: child,
+                    ),
+                  );
+                },
+                child: Image.asset(
+                  'assets/car.png',
+                  height: 112,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+            Positioned(
+              right: 22,
+              top: 26,
+              child: Container(
+                width: 76,
+                height: 76,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.brand.withValues(alpha: 0.25),
+                    width: 9,
+                  ),
+                ),
               ),
             ),
             Padding(
@@ -200,13 +265,34 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      activeCount > 0
+                          ? 'Поездка в процессе'
+                          : 'Готовы к заказу',
+                      style: const TextStyle(
+                        color: AppColors.brand,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(
-                        width: 210,
+                        width: 205,
                         child: Text(
-                          'Куда везём сегодня?',
+                          'Детская поездка без лишних звонков',
                           style: TextStyle(
                             fontSize: 22,
                             height: 1.15,
@@ -216,10 +302,10 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Безопасно доставим ребёнка',
+                        'Маршрут, водитель и статус — в одном экране',
                         style: TextStyle(
                           color: AppColors.muted.withValues(alpha: 0.9),
-                          fontSize: 13,
+                          fontSize: 12,
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -241,37 +327,30 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                     ],
                   ),
                   const Spacer(),
-                  Container(
-                    constraints: const BoxConstraints(maxWidth: 190),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.brand,
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            'Заказать поездку',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: AppColors.onBrand,
-                              fontWeight: FontWeight.w800,
+                  SizedBox(
+                    width: 190,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: _order,
+                      style: ElevatedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              'Заказать',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        ),
-                        SizedBox(width: 6),
-                        Icon(
-                          Icons.arrow_forward,
-                          color: AppColors.onBrand,
-                          size: 18,
-                        ),
-                      ],
+                          SizedBox(width: 8),
+                          Icon(Icons.arrow_forward, size: 18),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -285,19 +364,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
 
   Widget _childrenRow() {
     if (_children.isEmpty) {
-      return EmptyState(
-        icon: Icons.child_care_outlined,
-        title: 'Добавьте ребёнка',
-        subtitle: 'Укажите данные ребёнка, чтобы заказывать поездки.',
-        actionLabel: '+ Добавить ребёнка',
-        onAction: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const ChildrenScreen()),
-          );
-          _load();
-        },
-      );
+      return _addChildPanel();
     }
     return SizedBox(
       height: 92,
@@ -350,6 +417,253 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _insightStrip(int activeCount, int todayCount) {
+    final childrenCount = _children.length;
+    return Row(
+      children: [
+        Expanded(
+          child: _metricCard(
+            Icons.child_care_outlined,
+            '$childrenCount',
+            'детей',
+            AppColors.brand,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _metricCard(
+            Icons.route_outlined,
+            '$todayCount',
+            'сегодня',
+            const Color(0xFF4C8DFF),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _metricCard(
+            Icons.shield_outlined,
+            activeCount > 0 ? '$activeCount' : '24/7',
+            activeCount > 0 ? 'активно' : 'связь',
+            AppColors.success,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _metricCard(IconData icon, String value, String label, Color color) {
+    return Container(
+      height: 82,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Icon(icon, color: color, size: 20),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: AppColors.muted, fontSize: 11),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _addChildPanel() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const SoftIcon(
+                Icons.child_care_outlined,
+                bg: AppColors.brandSoft,
+                size: 48,
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Профиль ребёнка',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    SizedBox(height: 3),
+                    Text(
+                      'Нужен для быстрого заказа',
+                      style: TextStyle(color: AppColors.muted, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              TextButton(
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ChildrenScreen()),
+                  );
+                  _load();
+                },
+                child: const Text('Добавить'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          const Row(
+            children: [
+              Expanded(
+                child: _ChecklistItem(
+                  icon: Icons.school_outlined,
+                  label: 'Школа',
+                ),
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: _ChecklistItem(
+                  icon: Icons.home_work_outlined,
+                  label: 'Адреса',
+                ),
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: _ChecklistItem(
+                  icon: Icons.notes_outlined,
+                  label: 'Заметки',
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _todayPlanEmpty() {
+    return GestureDetector(
+      onTap: _order,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppColors.line),
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                const SoftIcon(Icons.alt_route_outlined, size: 48),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'День свободен',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      SizedBox(height: 3),
+                      Text(
+                        'Создайте маршрут за минуту',
+                        style: TextStyle(color: AppColors.muted, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: const BoxDecoration(
+                    color: AppColors.brand,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.add,
+                    color: AppColors.onBrand,
+                    size: 18,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            const _RoutePreview(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _serviceCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF111318),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.brand.withValues(alpha: 0.22)),
+      ),
+      child: const Row(
+        children: [
+          SoftIcon(Icons.support_agent_outlined, size: 48),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Оператор следит за поездкой',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Если маршрут изменится, статус появится в приложении.',
+                  style: TextStyle(
+                    color: AppColors.muted,
+                    fontSize: 12,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -514,6 +828,98 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
           ),
         );
       }).toList(),
+    );
+  }
+}
+
+class _ChecklistItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _ChecklistItem({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 54,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: AppColors.surface2,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: AppColors.brand, size: 18),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RoutePreview extends StatelessWidget {
+  const _RoutePreview();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surface2,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        children: [
+          Column(
+            children: [
+              _routeDot(AppColors.brand),
+              Container(width: 2, height: 26, color: AppColors.line),
+              _routeDot(const Color(0xFFF97316)),
+            ],
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Откуда забрать ребёнка',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                ),
+                SizedBox(height: 12),
+                Text(
+                  'Куда отвезти',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppColors.muted,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right, color: AppColors.muted),
+        ],
+      ),
+    );
+  }
+
+  Widget _routeDot(Color color) {
+    return Container(
+      width: 10,
+      height: 10,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
 }

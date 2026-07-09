@@ -46,62 +46,75 @@ class AppBottomNav extends StatelessWidget {
     ];
     // Insert the gap for the floating center button in the middle.
     if (hasCenter) {
-      items.insert(items.length ~/ 2, const SizedBox(width: 68));
+      items.insert(items.length ~/ 2, const SizedBox(width: 78));
     }
 
     return SafeArea(
       top: false,
-      child: SizedBox(
-        height: 108,
+      child: Container(
+        height: 118,
+        color: AppColors.bg,
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      AppColors.bg.withValues(alpha: 0),
-                      AppColors.bg.withValues(alpha: 0.92),
-                      AppColors.bg,
-                    ],
-                    stops: const [0, 0.42, 1],
-                  ),
-                ),
-              ),
-            ),
             Positioned(
-              left: 18,
-              right: 18,
-              bottom: 12,
-              child: Container(
-                height: 72,
-                decoration: BoxDecoration(
-                  color: _barColor,
-                  borderRadius: BorderRadius.circular(40),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.45),
-                      blurRadius: 26,
-                      offset: const Offset(0, 12),
-                    ),
-                  ],
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: Row(children: items),
+              left: 20,
+              right: 20,
+              bottom: 14,
+              child: ClipPath(
+                clipper: hasCenter ? _NavBarClipper() : null,
+                child: Container(
+                  height: hasCenter ? 86 : 72,
+                  padding: EdgeInsets.only(top: hasCenter ? 14 : 0),
+                  decoration: BoxDecoration(
+                    color: _barColor,
+                    borderRadius: hasCenter ? null : BorderRadius.circular(40),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.55),
+                        blurRadius: 30,
+                        offset: const Offset(0, 14),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: Row(children: items),
+                  ),
                 ),
               ),
             ),
             if (hasCenter)
               Positioned(
+                left: 20,
+                right: 20,
+                bottom: 14,
+                child: IgnorePointer(
+                  child: Container(
+                    height: 86,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(44),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.brand.withValues(alpha: 0.10),
+                          blurRadius: 34,
+                          spreadRadius: -2,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            if (hasCenter)
+              Positioned(
                 left: 0,
                 right: 0,
-                bottom: 44,
-                child: Center(
-                  child: _CenterButton(icon: centerIcon, onTap: onCenter!),
+                bottom: 52,
+                child: Material(
+                  color: Colors.transparent,
+                  child: Center(
+                    child: _CenterButton(icon: centerIcon, onTap: onCenter!),
+                  ),
                 ),
               ),
           ],
@@ -109,6 +122,35 @@ class AppBottomNav extends StatelessWidget {
       ),
     );
   }
+}
+
+class _NavBarClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final w = size.width;
+    final h = size.height;
+    final c = w / 2;
+    const top = 15.0;
+    const r = 36.0;
+    const notchR = 37.0;
+    return Path()
+      ..moveTo(r, top)
+      ..lineTo(c - notchR - 14, top)
+      ..cubicTo(c - notchR + 2, top, c - notchR + 1, 0, c, 0)
+      ..cubicTo(c + notchR - 1, 0, c + notchR - 2, top, c + notchR + 14, top)
+      ..lineTo(w - r, top)
+      ..quadraticBezierTo(w, top, w, top + r)
+      ..lineTo(w, h - r)
+      ..quadraticBezierTo(w, h, w - r, h)
+      ..lineTo(r, h)
+      ..quadraticBezierTo(0, h, 0, h - r)
+      ..lineTo(0, top + r)
+      ..quadraticBezierTo(0, top, r, top)
+      ..close();
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
 
 /// A single tappable nav destination with scale + colour + label animation.
