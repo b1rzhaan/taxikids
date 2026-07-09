@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme.dart';
 import '../../models/models.dart';
 import '../../services/services.dart';
+import '../../widgets/trip_child_avatar.dart';
 import '../../widgets/trip_status.dart';
 import 'trip_tracking_screen.dart';
 
@@ -185,7 +186,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget _tripCard(Trip t) {
     final d = DateTime.tryParse(t.scheduledAt)?.toLocal();
     final time = d != null ? DateFormat('HH:mm').format(d) : '';
-    final childName = t.childName ?? t.child?.fullName ?? 'Поездка';
+    final childName = t.displayChildName;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Card(
@@ -202,11 +203,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
               children: [
                 Row(
                   children: [
-                    PhotoAvatar(
-                      name: childName,
-                      photoUrl: t.child?.photo,
-                      radius: 22,
-                    ),
+                    TripChildAvatar(trip: t, radius: 22),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(

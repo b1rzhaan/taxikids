@@ -2,6 +2,8 @@ from django.db import transaction
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
+from apps.children.serializers import ChildSerializer
+
 from .models import ParentProfile, Role, SavedAddress, User
 
 
@@ -79,6 +81,29 @@ class UserSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         url = photo.url
         return request.build_absolute_uri(url) if request else url
+
+
+class ParentProfileSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(source="user.email", read_only=True)
+    user_id = serializers.IntegerField(source="user.id", read_only=True)
+    children = ChildSerializer(many=True, read_only=True)
+    children_count = serializers.IntegerField(source="children.count", read_only=True)
+
+    class Meta:
+        model = ParentProfile
+        fields = [
+            "id",
+            "user_id",
+            "email",
+            "full_name",
+            "phone",
+            "default_address",
+            "photo",
+            "children",
+            "children_count",
+            "created_at",
+        ]
+        read_only_fields = ["id", "user_id", "email", "children", "created_at"]
 
 
 class SavedAddressSerializer(serializers.ModelSerializer):

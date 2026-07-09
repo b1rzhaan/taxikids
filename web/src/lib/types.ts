@@ -68,6 +68,31 @@ export interface Trip {
   rating_comment?: string;
 }
 
+export interface Child {
+  id: number;
+  full_name: string;
+  birth_date?: string | null;
+  age?: number | null;
+  school: string;
+  grade: string;
+  is_primary: boolean;
+  photo?: string | null;
+  note_for_driver?: string;
+}
+
+export interface ParentProfile {
+  id: number;
+  user_id: number;
+  email: string;
+  full_name: string;
+  phone: string;
+  default_address?: string;
+  photo?: string | null;
+  children_count?: number;
+  children?: Child[];
+  created_at: string;
+}
+
 export interface Driver {
   id: number;
   full_name: string;
@@ -99,6 +124,7 @@ export interface Vehicle {
   mileage_km?: number | null;
   tech_passport?: string;
   photo?: string | null;
+  is_active?: boolean;
 }
 
 export interface DriverLocation {

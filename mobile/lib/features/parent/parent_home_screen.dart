@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme.dart';
 import '../../models/models.dart';
 import '../../services/services.dart';
+import '../../widgets/trip_child_avatar.dart';
 import '../../widgets/trip_status.dart';
 import '../../widgets/ui.dart';
 import '../shared/notifications_screen.dart';
@@ -683,7 +684,6 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
   Widget _todayTile(Trip t) {
     final d = DateTime.tryParse(t.scheduledAt)?.toLocal();
     final time = d != null ? DateFormat('HH:mm').format(d) : '';
-    final childName = t.childName ?? t.child?.fullName ?? 'РџРѕРµР·РґРєР°';
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
@@ -700,7 +700,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
         leading: Stack(
           clipBehavior: Clip.none,
           children: [
-            PhotoAvatar(name: childName, photoUrl: t.child?.photo, radius: 23),
+            TripChildAvatar(trip: t, radius: 23),
             if (time.isNotEmpty)
               Positioned(
                 right: -8,
@@ -728,7 +728,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
           ],
         ),
         title: Text(
-          t.childName ?? 'Поездка',
+          t.displayChildName,
           style: const TextStyle(fontWeight: FontWeight.w700),
         ),
         subtitle: Text(
@@ -743,7 +743,6 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
 
   Widget _currentTrip(Trip t) {
     final eta = (t.routeDurationS / 60).round();
-    final childName = t.childName ?? t.child?.fullName ?? 'Р РµР±С‘РЅРѕРє';
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
@@ -763,11 +762,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
               Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  PhotoAvatar(
-                    name: childName,
-                    photoUrl: t.child?.photo,
-                    radius: 24,
-                  ),
+                  TripChildAvatar(trip: t, radius: 24),
                   Positioned(
                     right: -5,
                     bottom: -3,
@@ -794,7 +789,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      t.childName ?? 'Ребёнок',
+                      t.displayChildName,
                       style: const TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 15,

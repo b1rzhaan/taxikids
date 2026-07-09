@@ -1,11 +1,14 @@
 "use client";
 
+import { useState } from "react";
+import type React from "react";
 import { useParams, useRouter } from "next/navigation";
 import useSWR from "swr";
 import {
   ArrowLeft,
   Baby,
   BadgeCheck,
+  Camera,
   Car,
   Phone,
   Mail,
@@ -73,7 +76,7 @@ export default function DriverProfilePage() {
 
       <div className="grid xl:grid-cols-3 gap-4 items-start">
         {/* Left column: identity card */}
-        <div className="card p-5 space-y-4">
+          <div className="card p-5 space-y-4">
           <div className="flex items-center gap-4">
             {driver.photo ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -133,6 +136,8 @@ export default function DriverProfilePage() {
               value={`${driver.experience_years} лет · ${stats?.completed_total ?? 0} поездок`}
             />
           </div>
+
+          {canReview && <DriverEditCard driver={driver} onSaved={mutate} />}
         </div>
 
         {/* Right columns: money + charts */}
@@ -300,5 +305,126 @@ function DocRow({ label, value }: { label: string; value: string }) {
       <span className="text-muted">{label}</span>
       <span className="font-semibold">{value}</span>
     </div>
+  );
+}
+
+function DriverEditCard({
+  driver,
+  onSaved,
+}: {
+  driver: Driver;
+  onSaved: () => void;
+}) {
+  const [fullName, setFullName] = useState(driver.full_name);
+  const [phone, setPhone] = useState(driver.phone || "");
+  const [iin, setIin] = useState(driver.iin || "");
+  const [license, setLicense] = useState(driver.license_number || "");
+  const [experience, setExperience] = useState(driver.experience_years);
+  const [hasSeat, setHasSeat] = useState(Boolean(driver.has_child_seat));
+  const [files, setFiles] = useState<Record<string, File | null>>({});
+  const [saving, setSaving] = useState(false);
+
+  async function save() {
+    setSaving(true);
+    try {
+      const form = new FormData();
+      form.set("full_name", fullName);
+      form.set("phone", phone);
+      form.set("iin", iin);
+      form.set("license_number", license);
+      form.set("experience_years", String(experience || 0));
+      form.set("has_child_seat", hasSeat ? "true" : "false");
+      Object.entries(files).forEach(([key, file]) => {
+        if (file) form.set(key, file);
+      });
+      await api.upload(`/drivers/${driver.id}/`, form);
+      onSaved();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="border-t border-line pt-4 space-y-3">
+      <div className="font-bold">Редактирование</div>
+      <div className="grid grid-cols-2 gap-2">
+        <input
+          className="input"
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          placeholder="ФИО"
+        />
+        <input
+          className="input"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder="Телефон"
+        />
+        <input
+          className="input"
+          value={iin}
+          onChange={(e) => setIin(e.target.value)}
+          placeholder="ИИН"
+        />
+        <input
+          className="input"
+          value={license}
+          onChange={(e) => setLicense(e.target.value)}
+          placeholder="Номер ВУ"
+        />
+        <input
+          className="input"
+          type="number"
+          min={0}
+          value={experience}
+          onChange={(e) => setExperience(Number(e.target.value))}
+          placeholder="Стаж"
+        />
+        <label className="flex items-center gap-2 rounded-xl border border-line px-3 py-2.5 text-sm font-semibold">
+          <input
+            type="checkbox"
+            checked={hasSeat}
+            onChange={(e) => setHasSeat(e.target.checked)}
+          />
+          Детское кресло
+        </label>
+      </div>
+      <div className="grid grid-cols-1 gap-2">
+        <UploadButton label="Фото водителя" name="photo" setFiles={setFiles} />
+        <UploadButton label="Вод. удостоверение" name="license_photo" setFiles={setFiles} />
+        <UploadButton label="Удостоверение личности" name="id_card_photo" setFiles={setFiles} />
+      </div>
+      <button className="btn-brand w-full" disabled={saving} onClick={save}>
+        {saving ? "Сохранение..." : "Сохранить"}
+      </button>
+    </div>
+  );
+}
+
+function UploadButton({
+  label,
+  name,
+  setFiles,
+}: {
+  label: string;
+  name: string;
+  setFiles: React.Dispatch<React.SetStateAction<Record<string, File | null>>>;
+}) {
+  const [fileName, setFileName] = useState("");
+  return (
+    <label className="btn-ghost justify-start text-sm">
+      <Camera className="h-4 w-4" />
+      <span className="truncate">{fileName || label}</span>
+      <input
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0] ?? null;
+          setFileName(file?.name ?? "");
+          setFiles((prev) => ({ ...prev, [name]: file }));
+        }}
+      />
+    </label>
   );
 }

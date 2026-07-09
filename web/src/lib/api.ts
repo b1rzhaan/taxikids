@@ -33,8 +33,10 @@ async function request<T>(
   retry = true
 ): Promise<T> {
   const session = getSession();
+  const isFormData =
+    typeof FormData !== "undefined" && options.body instanceof FormData;
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    ...(isFormData ? {} : { "Content-Type": "application/json" }),
     ...(options.headers as Record<string, string>),
   };
   if (session?.access) headers.Authorization = `Bearer ${session.access}`;
@@ -93,6 +95,8 @@ export const api = {
     request<T>(path, { method: "POST", body: JSON.stringify(body ?? {}) }),
   patch: <T>(path: string, body?: unknown) =>
     request<T>(path, { method: "PATCH", body: JSON.stringify(body ?? {}) }),
+  upload: <T>(path: string, form: FormData, method = "PATCH") =>
+    request<T>(path, { method, body: form }),
   del: <T>(path: string) => request<T>(path, { method: "DELETE" }),
 };
 

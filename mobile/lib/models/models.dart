@@ -239,4 +239,32 @@ class Trip {
         .toList(),
     myRating: j['my_rating'],
   );
+
+  Child? get primaryChild {
+    if (child != null) return child;
+    if (children.isNotEmpty) return children.first;
+    return null;
+  }
+
+  String get displayChildName {
+    final names = children
+        .map((c) => c.fullName.trim())
+        .where((name) => name.isNotEmpty)
+        .toList();
+    if (names.isNotEmpty) return names.join(', ');
+    final directName = childName?.trim();
+    if (directName != null && directName.isNotEmpty) return directName;
+    final primaryName = primaryChild?.fullName.trim();
+    if (primaryName != null && primaryName.isNotEmpty) return primaryName;
+    return 'Ребёнок';
+  }
+
+  String? get primaryChildPhoto => primaryChild?.photo;
+
+  int get childCount {
+    if (children.isNotEmpty) return children.length;
+    if (primaryChild != null) return 1;
+    final directName = childName?.trim();
+    return directName == null || directName.isEmpty ? 0 : 1;
+  }
 }

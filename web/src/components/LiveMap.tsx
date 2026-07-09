@@ -104,7 +104,7 @@ export default function LiveMap({
   /** Live taxis on the line (real-time tracking). */
   taxis?: DriverLocation[];
 }) {
-  const displayPath = path ? softenRoute(path) : undefined;
+  const displayPath = path && path.length > 1 ? softenRoute(path) : undefined;
   return (
     <MapContainer
       center={center}
@@ -135,7 +135,14 @@ export default function LiveMap({
             <Marker position={b} icon={icon("#f97316")}>
               <Popup>Назначение: {t.dropoff_text}</Popup>
             </Marker>
-            <Polyline positions={fallbackPath} color="#FFCE00" weight={4} />
+            {!displayPath && (
+              <Polyline
+                positions={fallbackPath}
+                color="#FFCE00"
+                weight={4}
+                opacity={0.7}
+              />
+            )}
           </div>
         );
       })}

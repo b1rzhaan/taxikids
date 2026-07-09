@@ -4,6 +4,7 @@ import '../../core/api_client.dart';
 import '../../core/theme.dart';
 import '../../models/models.dart';
 import '../../services/services.dart';
+import '../../widgets/trip_child_avatar.dart';
 import '../../widgets/trip_status.dart';
 import 'driver_trip_screen.dart';
 
@@ -168,14 +169,14 @@ class _DriverTripsScreenState extends State<DriverTripsScreen> {
             children: [
               Row(
                 children: [
-                  InitialAvatar(t.childName ?? 'Р', radius: 20),
+                  TripChildAvatar(trip: t, radius: 20),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          t.childName ?? 'Ребёнок',
+                          t.displayChildName,
                           style: const TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 15,

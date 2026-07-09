@@ -7,6 +7,7 @@ import '../../core/theme.dart';
 import '../../models/models.dart';
 import '../../services/services.dart';
 import '../../widgets/rating_sheet.dart';
+import '../../widgets/trip_child_avatar.dart';
 import '../../widgets/trip_map.dart';
 import '../../widgets/trip_status.dart';
 import '../../widgets/ui.dart';
@@ -151,6 +152,9 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
                     dropoff: LatLng(t.dropoffLat, t.dropoffLng),
                     driver: _driverPos,
                     route: toLatLng(t.polyline),
+                    pickupName: t.displayChildName,
+                    pickupPhotoUrl: t.primaryChildPhoto,
+                    pickupCount: t.childCount,
                   ),
                 ),
                 _sheet(t),
@@ -167,7 +171,7 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
       'driver_assigned',
     }.contains(t.status);
     final info = statusInfo(t.status);
-    final childName = t.childName ?? t.child?.fullName ?? 'РџРѕРµР·РґРєР°';
+    final childName = t.displayChildName;
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
@@ -195,11 +199,7 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
             ),
             Row(
               children: [
-                PhotoAvatar(
-                  name: childName,
-                  photoUrl: t.child?.photo,
-                  radius: 23,
-                ),
+                TripChildAvatar(trip: t, radius: 23),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(

@@ -6,13 +6,15 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from .models import Role, SavedAddress, User
+from .models import ParentProfile, Role, SavedAddress, User
 from .serializers import (
     ParentRegisterSerializer,
+    ParentProfileSerializer,
     RoleAwareTokenSerializer,
     SavedAddressSerializer,
     UserSerializer,
 )
+from .permissions import IsAdminOrOperator, IsStaffRole
 
 
 def _int(v):
@@ -159,3 +161,23 @@ class SavedAddressViewSet(viewsets.ModelViewSet):
         return SavedAddress.objects.filter(owner=self.request.user).order_by(
             "-created_at"
         )
+
+
+class ParentProfileViewSet(viewsets.ModelViewSet):
+    queryset = ParentProfile.objects.select_related("user").prefetch_related(
+        "children"
+    )
+    serializer_class = ParentProfileSerializer
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+    search_fields = ["full_name", "phone", "user__email", "children__full_name"]
+
+    def get_permissions(self):
+        if self.action in ("list", "retrieve"):
+            return [IsStaffRole()]
+        return [IsAdminOrOperator()]
+
+    def perform_update(self, serializer):
+        parent = serializer.save()
+        if parent.phone:
+            parent.user.phone = parent.phone
+            parent.user.save(update_fields=["phone"])

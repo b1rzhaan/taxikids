@@ -5,7 +5,7 @@ from django.db.models import Sum
 from django.utils import timezone
 from rest_framework import viewsets
 from rest_framework.decorators import action, api_view, parser_classes, permission_classes
-from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 
 from apps.accounts.permissions import (
@@ -161,6 +161,7 @@ def driver_set_online(request):
 class DriverViewSet(viewsets.ModelViewSet):
     queryset = DriverProfile.objects.select_related("user", "salary_scheme").all()
     serializer_class = DriverProfileSerializer
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
     filterset_fields = ["doc_status", "is_available"]
     search_fields = ["full_name", "phone", "iin"]
 
@@ -245,6 +246,7 @@ class VehicleViewSet(viewsets.ModelViewSet):
     queryset = Vehicle.objects.select_related("driver").all()
     serializer_class = VehicleSerializer
     permission_classes = [IsAdminOrOperator]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
     filterset_fields = ["is_active", "driver"]
 
 

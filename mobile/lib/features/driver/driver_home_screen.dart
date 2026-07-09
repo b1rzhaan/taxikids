@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme.dart';
 import '../../models/models.dart';
 import '../../services/services.dart';
+import '../../widgets/trip_child_avatar.dart';
 import '../../widgets/ui.dart';
 import '../parent/messages_screen.dart';
 import '../shared/notifications_screen.dart';
@@ -404,11 +405,11 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                InitialAvatar(t.childName ?? 'Р', radius: 14),
+                TripChildAvatar(trip: t, radius: 14),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    t.childName ?? 'Ребёнок',
+                    t.displayChildName,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontWeight: FontWeight.w700),
                   ),

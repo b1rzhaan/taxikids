@@ -3,14 +3,26 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
-  ClipboardList,
-  MapPinned,
+  Bell,
   Car,
+  ClipboardList,
   CreditCard,
-  Wallet,
+  Download,
+  FileText,
+  Landmark,
+  LayoutDashboard,
   LogOut,
+  MapPinned,
+  MessageCircle,
   Percent,
+  Settings,
+  ShieldCheck,
+  Star,
+  Tags,
+  TrendingDown,
+  TrendingUp,
+  Users,
+  Wallet,
   type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
@@ -27,16 +39,44 @@ const ITEMS: Item[] = [
   { href: "/trips", label: "Заказы", Icon: ClipboardList },
   { href: "/map", label: "Карта поездок", Icon: MapPinned },
   { href: "/drivers", label: "Водители", Icon: Car },
+  { href: "/parents", label: "Родители", Icon: Users },
+  { href: "/vehicles", label: "Автомобили", Icon: Car },
   { href: "/payments", label: "Платежи", Icon: CreditCard },
   { href: "/payouts", label: "Выплаты", Icon: Wallet },
   { href: "/tariffs", label: "Тарифы", Icon: Percent },
+  { href: "/promo-codes", label: "Промокоды", Icon: Tags },
+  { href: "/reviews", label: "Отзывы", Icon: Star },
+  { href: "/messages", label: "Сообщения", Icon: MessageCircle },
+  { href: "/notifications", label: "Уведомления", Icon: Bell },
+  { href: "/reports", label: "Фин. отчёты", Icon: FileText },
+  { href: "/income", label: "Доходы", Icon: TrendingUp },
+  { href: "/expenses", label: "Расходы", Icon: TrendingDown },
+  { href: "/bank", label: "Банк", Icon: Landmark },
+  { href: "/documents", label: "Акты / документы", Icon: FileText },
+  { href: "/exports", label: "Экспорт", Icon: Download },
+  { href: "/settings", label: "Настройки", Icon: Settings },
+  { href: "/staff", label: "Роли и сотрудники", Icon: ShieldCheck },
 ];
+
+const ROLE_LABEL: Record<string, string> = {
+  admin: "Админ",
+  operator: "Оператор",
+  accountant: "Бухгалтер",
+};
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { session, signOut } = useAuth();
   const role = session?.role;
   const initial = (session?.email?.[0] ?? "?").toUpperCase();
+
+  const items = ITEMS.filter(
+    (item) =>
+      role &&
+      ACCESS.find((rule) => item.href.startsWith(rule.prefix))?.roles.includes(
+        role
+      )
+  );
 
   return (
     <aside className="w-64 shrink-0 bg-white border-r border-line h-screen sticky top-0 overflow-y-auto flex flex-col">
@@ -54,12 +94,8 @@ export default function Sidebar() {
       </div>
 
       <nav className="space-y-0.5 flex-1 mt-3" aria-label="Основное меню">
-        {ITEMS.filter(
-          (i) =>
-            role &&
-            ACCESS.find((r) => i.href.startsWith(r.prefix))?.roles.includes(role)
-        ).map(({ href, label, Icon }) => {
-          const active = pathname === href;
+        {items.map(({ href, label, Icon }) => {
+          const active = pathname === href || pathname.startsWith(`${href}/`);
           return (
             <Link
               key={href}
@@ -75,7 +111,9 @@ export default function Sidebar() {
               )}
               <Icon
                 className={`h-[18px] w-[18px] ${
-                  active ? "text-brand-dark" : "text-gray-400 group-hover:text-ink"
+                  active
+                    ? "text-brand-dark"
+                    : "text-gray-400 group-hover:text-ink"
                 }`}
                 strokeWidth={2.1}
               />
@@ -91,8 +129,12 @@ export default function Sidebar() {
             {initial}
           </div>
           <div className="min-w-0">
-            <div className="text-[13px] font-semibold truncate">{session?.email}</div>
-            <div className="text-[11px] uppercase tracking-wide text-muted">{role}</div>
+            <div className="text-[13px] font-semibold truncate">
+              {session?.email}
+            </div>
+            <div className="text-[11px] uppercase tracking-wide text-muted">
+              {role ? ROLE_LABEL[role] ?? role : ""}
+            </div>
           </div>
         </div>
         <button

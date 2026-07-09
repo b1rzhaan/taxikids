@@ -13,6 +13,10 @@ class TripMap extends StatelessWidget {
   final List<LatLng> route;
   final MapController? controller;
   final void Function(LatLng)? onTap;
+  final String? pickupName;
+  final String? pickupPhotoUrl;
+  final int pickupCount;
+  final bool showTrafficBadge;
 
   const TripMap({
     super.key,
@@ -22,6 +26,10 @@ class TripMap extends StatelessWidget {
     this.route = const [],
     this.controller,
     this.onTap,
+    this.pickupName,
+    this.pickupPhotoUrl,
+    this.pickupCount = 0,
+    this.showTrafficBadge = false,
   });
 
   LatLng get _center {
@@ -37,53 +45,191 @@ class TripMap extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final displayRoute = route.length == 2 ? softenedRoute(route) : route;
-    return FlutterMap(
-      mapController: controller,
-      options: MapOptions(
-        initialCenter: _center,
-        initialZoom: 13,
-        onTap: onTap == null ? null : (_, p) => onTap!(p),
-      ),
+    return Stack(
       children: [
-        kidsTileLayer(),
-        if (displayRoute.length >= 2)
-          PolylineLayer(
-            polylines: [
-              Polyline(
-                points: displayRoute,
-                strokeWidth: 6,
-                color: AppColors.brand,
-                borderStrokeWidth: 3,
-                borderColor: const Color(0xFF6B4E00),
-              ),
-            ],
+        FlutterMap(
+          mapController: controller,
+          options: MapOptions(
+            initialCenter: _center,
+            initialZoom: 13,
+            onTap: onTap == null ? null : (_, p) => onTap!(p),
           ),
-        MarkerLayer(
-          markers: [
-            if (pickup != null) _dot(pickup!, const Color(0xFF2563EB)),
-            if (dropoff != null) _dot(dropoff!, const Color(0xFFF97316)),
-            if (driver != null)
-              Marker(
-                point: driver!,
-                width: 40,
-                height: 40,
-                child: const Text('🚕', style: TextStyle(fontSize: 30)),
+          children: [
+            kidsTileLayer(),
+            if (displayRoute.length >= 2)
+              PolylineLayer(
+                polylines: [
+                  Polyline(
+                    points: displayRoute,
+                    strokeWidth: 10,
+                    color: const Color(0xFF2F2500),
+                  ),
+                  Polyline(
+                    points: displayRoute,
+                    strokeWidth: 6,
+                    color: AppColors.brand,
+                  ),
+                  Polyline(
+                    points: displayRoute,
+                    strokeWidth: 2,
+                    color: Colors.white.withValues(alpha: 0.55),
+                  ),
+                ],
               ),
+            MarkerLayer(
+              markers: [
+                if (pickup != null) _pickupMarker(pickup!),
+                if (dropoff != null) _dropoffMarker(dropoff!),
+                if (driver != null)
+                  Marker(
+                    point: driver!,
+                    width: 40,
+                    height: 40,
+                    child: const Text('🚕', style: TextStyle(fontSize: 30)),
+                  ),
+              ],
+            ),
           ],
         ),
+        if (showTrafficBadge)
+          Positioned(
+            top: 88,
+            right: 16,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: const Color(0xEE111827),
+                borderRadius: BorderRadius.circular(22),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.18),
+                    blurRadius: 18,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.traffic_outlined,
+                      color: AppColors.brand,
+                      size: 17,
+                    ),
+                    SizedBox(width: 7),
+                    Text(
+                      'Пробки учтены',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }
 
-  Marker _dot(LatLng p, Color color) => Marker(
+  Marker _pickupMarker(LatLng p) => Marker(
     point: p,
-    width: 22,
-    height: 22,
-    child: Container(
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 3),
+    width: 58,
+    height: 70,
+    child: Transform.translate(
+      offset: const Offset(0, -18),
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
+        children: [
+          Positioned(
+            bottom: 2,
+            child: Transform.rotate(
+              angle: 0.78,
+              child: Container(
+                width: 18,
+                height: 18,
+                decoration: BoxDecoration(
+                  color: AppColors.brand,
+                  borderRadius: BorderRadius.circular(5),
+                  border: Border.all(color: Colors.white, width: 3),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.16),
+                      blurRadius: 12,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.brand, width: 4),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.22),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: PhotoAvatar(
+              name: pickupName ?? 'Ребенок',
+              photoUrl: pickupPhotoUrl,
+              radius: 20,
+            ),
+          ),
+          if (pickupCount > 1)
+            Positioned(
+              right: -1,
+              top: 3,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.ink,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+                child: Text(
+                  '+${pickupCount - 1}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    ),
+  );
+
+  Marker _dropoffMarker(LatLng p) => Marker(
+    point: p,
+    width: 36,
+    height: 46,
+    child: Transform.translate(
+      offset: const Offset(0, -14),
+      child: const Icon(
+        Icons.location_on,
+        color: Color(0xFFF97316),
+        size: 38,
+        shadows: [
+          Shadow(
+            color: Color(0x55000000),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
       ),
     ),
   );

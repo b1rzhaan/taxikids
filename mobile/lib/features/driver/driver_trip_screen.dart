@@ -7,6 +7,7 @@ import '../../core/theme.dart';
 import '../../models/models.dart';
 import '../../services/services.dart';
 import '../../widgets/rating_sheet.dart';
+import '../../widgets/trip_child_avatar.dart';
 import '../../widgets/trip_map.dart';
 import '../../widgets/trip_status.dart';
 import 'dgis_web_navigation_screen.dart';
@@ -36,16 +37,20 @@ class _DriverTripScreenState extends State<DriverTripScreen> {
   Timer? _gpsTimer;
 
   static const _activeStatuses = {
-    'driver_assigned', 'driver_on_way', 'driver_arrived',
-    'child_picked_up', 'in_progress', 'child_delivered',
+    'driver_assigned',
+    'driver_on_way',
+    'driver_arrived',
+    'child_picked_up',
+    'in_progress',
+    'child_delivered',
   };
 
   // Before pickup the driver heads to the child; after — to the destination.
   bool get _headingToPickup => {
-        'driver_assigned',
-        'driver_on_way',
-        'driver_arrived',
-      }.contains(_trip?.status);
+    'driver_assigned',
+    'driver_on_way',
+    'driver_arrived',
+  }.contains(_trip?.status);
 
   ({double lat, double lng, String text})? get _target {
     final t = _trip;
@@ -92,7 +97,9 @@ class _DriverTripScreenState extends State<DriverTripScreen> {
       }
       final p = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.high, timeLimit: Duration(seconds: 8)),
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 8),
+        ),
       );
       if (!mounted) return;
       setState(() => _myPos = LatLng(p.latitude, p.longitude));
@@ -111,19 +118,22 @@ class _DriverTripScreenState extends State<DriverTripScreen> {
     try {
       final updated = await TripsService.changeStatus(t.id, action[0]);
       if (mounted) setState(() => _trip = updated);
-      if (updated.status == 'completed' && updated.myRating == null && mounted) {
+      if (updated.status == 'completed' &&
+          updated.myRating == null &&
+          mounted) {
         await showRatingSheet(
           context,
           tripId: updated.id,
           title: 'Оцените заказ',
-          subtitle: updated.childName ?? '',
+          subtitle: updated.displayChildName,
         );
         if (mounted) _load();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(ApiClient.errorMessage(e))));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(ApiClient.errorMessage(e))));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -154,7 +164,9 @@ class _DriverTripScreenState extends State<DriverTripScreen> {
     return Scaffold(
       appBar: AppBar(title: Text('Заказ №${widget.tripId}')),
       body: t == null
-          ? const Center(child: CircularProgressIndicator(color: AppColors.brand))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.brand),
+            )
           : Column(
               children: [
                 Expanded(
@@ -163,6 +175,9 @@ class _DriverTripScreenState extends State<DriverTripScreen> {
                     dropoff: LatLng(t.dropoffLat, t.dropoffLng),
                     route: toLatLng(t.polyline),
                     driver: _myPos,
+                    pickupName: t.displayChildName,
+                    pickupPhotoUrl: t.primaryChildPhoto,
+                    pickupCount: t.childCount,
                   ),
                 ),
                 _panel(t),
@@ -187,11 +202,17 @@ class _DriverTripScreenState extends State<DriverTripScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              TripChildAvatar(trip: t, radius: 22),
+              const SizedBox(width: 12),
               Expanded(
-                child: Text(t.childName ?? 'Ребёнок',
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.w800)),
+                child: Text(
+                  t.displayChildName,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
               ),
               const SizedBox(width: 8),
               StatusChip(t.status),
@@ -210,8 +231,9 @@ class _DriverTripScreenState extends State<DriverTripScreen> {
               decoration: BoxDecoration(
                 color: AppColors.success.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(14),
-                border:
-                    Border.all(color: AppColors.success.withValues(alpha: 0.4)),
+                border: Border.all(
+                  color: AppColors.success.withValues(alpha: 0.4),
+                ),
               ),
               child: Row(
                 children: [
@@ -221,12 +243,20 @@ class _DriverTripScreenState extends State<DriverTripScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Оплата наличными',
-                            style: TextStyle(
-                                fontSize: 12, color: AppColors.muted)),
-                        Text('Возьмите с клиента ${t.priceAmount} ₸',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w800, fontSize: 15)),
+                        const Text(
+                          'Оплата наличными',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.muted,
+                          ),
+                        ),
+                        Text(
+                          'Возьмите с клиента ${t.priceAmount} ₸',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -244,9 +274,11 @@ class _DriverTripScreenState extends State<DriverTripScreen> {
               child: OutlinedButton.icon(
                 onPressed: t.polyline.length >= 2 ? _openNavigator : null,
                 icon: const Icon(Icons.navigation_outlined),
-                label: Text(_headingToPickup
-                    ? 'Навигатор к ребёнку'
-                    : 'Навигатор до места'),
+                label: Text(
+                  _headingToPickup
+                      ? 'Навигатор к ребёнку'
+                      : 'Навигатор до места',
+                ),
               ),
             ),
             const SizedBox(height: 10),
@@ -262,22 +294,30 @@ class _DriverTripScreenState extends State<DriverTripScreen> {
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(
-                            strokeWidth: 2, color: AppColors.onBrand))
+                          strokeWidth: 2,
+                          color: AppColors.onBrand,
+                        ),
+                      )
                     : Text(
                         (t.status == 'child_delivered' &&
                                 t.paymentMethod == 'cash')
                             ? 'Получить ${t.priceAmount} ₸ и завершить'
                             : action[1],
-                        style: const TextStyle(fontWeight: FontWeight.w800)),
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
               ),
             )
           else
             const Center(
               child: Padding(
                 padding: EdgeInsets.all(8),
-                child: Text('Поездка завершена ✅',
-                    style: TextStyle(
-                        fontWeight: FontWeight.w700, color: AppColors.success)),
+                child: Text(
+                  'Поездка завершена ✅',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.success,
+                  ),
+                ),
               ),
             ),
         ],
@@ -302,32 +342,38 @@ class _DriverTripScreenState extends State<DriverTripScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_headingToPickup ? 'Едем к ребёнку' : 'Везём ребёнка',
-                    style: const TextStyle(fontSize: 12, color: AppColors.muted)),
-                Text(_target?.text ?? '',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w700)),
+                Text(
+                  _headingToPickup ? 'Едем к ребёнку' : 'Везём ребёнка',
+                  style: const TextStyle(fontSize: 12, color: AppColors.muted),
+                ),
+                Text(
+                  _target?.text ?? '',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
               ],
             ),
           ),
           const SizedBox(width: 8),
-          Text('~$km км · $min мин',
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+          Text(
+            '~$km км · $min мин',
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          ),
         ],
       ),
     );
   }
 
   Widget _infoRow(IconData icon, String text) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 3),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, size: 18, color: AppColors.muted),
-            const SizedBox(width: 8),
-            Expanded(child: Text(text)),
-          ],
-        ),
-      );
+    padding: const EdgeInsets.symmetric(vertical: 3),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: AppColors.muted),
+        const SizedBox(width: 8),
+        Expanded(child: Text(text)),
+      ],
+    ),
+  );
 }

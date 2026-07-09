@@ -176,6 +176,12 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
       );
     }
     final topPad = MediaQuery.of(context).padding.top;
+    final selectedChildren = _children
+        .where((child) => _selectedChildIds.contains(child.id))
+        .toList();
+    final primarySelectedChild = selectedChildren.isEmpty
+        ? null
+        : selectedChildren.first;
     return Scaffold(
       body: Stack(
         children: [
@@ -191,6 +197,10 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
               route: _estimate == null
                   ? const []
                   : toLatLng(_estimate!.polyline),
+              pickupName: primarySelectedChild?.fullName,
+              pickupPhotoUrl: primarySelectedChild?.photo,
+              pickupCount: selectedChildren.length,
+              showTrafficBadge: _estimate?.hasTraffic == true,
             ),
           ),
           // Floating back button + title chip over the map.

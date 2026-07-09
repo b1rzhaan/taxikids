@@ -6,12 +6,14 @@ from .views import (
     DriverRegisterView,
     LoginView,
     MeView,
+    ParentProfileViewSet,
     ParentRegisterView,
     SavedAddressViewSet,
 )
 
 router = DefaultRouter()
 router.register("addresses", SavedAddressViewSet, basename="address")
+router.register("parents", ParentProfileViewSet, basename="parent-profile")
 
 urlpatterns = [
     path("login/", LoginView.as_view(), name="login"),
