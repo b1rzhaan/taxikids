@@ -381,6 +381,19 @@ class SupportService {
   static Future<List> myRequests() async =>
       _results(await _api.get('/notifications/emergency/'));
 
+  static Future<String> aiReply(
+    String message, {
+    List<Map<String, String>> history = const [],
+  }) async {
+    final data = await _api.post('/notifications/support/ai/', {
+      'message': message,
+      'history': history
+          .map((m) => {'role': m['role'], 'content': m['content']})
+          .toList(),
+    });
+    return '${data['reply'] ?? ''}';
+  }
+
   static Future<void> send(
     String message, {
     String type = 'call_request',

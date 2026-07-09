@@ -42,8 +42,10 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
     try {
       _children = await ChildrenService.list();
       if (_children.isNotEmpty) {
-        _child = _children.firstWhere((c) => c.isPrimary,
-            orElse: () => _children.first);
+        _child = _children.firstWhere(
+          (c) => c.isPrimary,
+          orElse: () => _children.first,
+        );
       }
     } catch (_) {}
     if (mounted) setState(() => _loading = false);
@@ -94,23 +96,34 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
     if (_pickup == null || _dropoff == null) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       try {
-        _map.fitCamera(CameraFit.coordinates(
-          coordinates: [
-            LatLng(_pickup!.lat, _pickup!.lng),
-            LatLng(_dropoff!.lat, _dropoff!.lng),
-          ],
-          padding: const EdgeInsets.fromLTRB(50, 90, 50, 60),
-        ));
+        _map.fitCamera(
+          CameraFit.coordinates(
+            coordinates: [
+              LatLng(_pickup!.lat, _pickup!.lng),
+              LatLng(_dropoff!.lat, _dropoff!.lng),
+            ],
+            padding: const EdgeInsets.fromLTRB(50, 90, 50, 60),
+          ),
+        );
       } catch (_) {}
     });
   }
 
   Future<void> _pickTime() async {
     final t = await showTimePicker(
-        context: context, initialTime: TimeOfDay.fromDateTime(_when));
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(_when),
+    );
     if (t != null) {
-      setState(() =>
-          _when = DateTime(_when.year, _when.month, _when.day, t.hour, t.minute));
+      setState(
+        () => _when = DateTime(
+          _when.year,
+          _when.month,
+          _when.day,
+          t.hour,
+          t.minute,
+        ),
+      );
     }
   }
 
@@ -130,7 +143,9 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
       );
       if (!mounted) return;
       final paid = await Navigator.push<bool>(
-          context, MaterialPageRoute(builder: (_) => PayScreen(trip: trip)));
+        context,
+        MaterialPageRoute(builder: (_) => PayScreen(trip: trip)),
+      );
       if (mounted) Navigator.pop(context, paid == true ? trip.id : null);
     } catch (e) {
       setState(() => _error = ApiClient.errorMessage(e));
@@ -143,11 +158,14 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
   Widget build(BuildContext context) {
     if (_loading) {
       return const Scaffold(
-          body: Center(child: CircularProgressIndicator(color: AppColors.brand)));
+        body: Center(child: CircularProgressIndicator(color: AppColors.brand)),
+      );
     }
     if (_children.isEmpty) {
       return Scaffold(
-          appBar: AppBar(title: const Text('Заказ поездки')), body: _noChildren());
+        appBar: AppBar(title: const Text('Заказ поездки')),
+        body: _noChildren(),
+      );
     }
     final topPad = MediaQuery.of(context).padding.top;
     return Scaffold(
@@ -156,11 +174,15 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
           Positioned.fill(
             child: TripMap(
               controller: _map,
-              pickup: _pickup == null ? null : LatLng(_pickup!.lat, _pickup!.lng),
-              dropoff:
-                  _dropoff == null ? null : LatLng(_dropoff!.lat, _dropoff!.lng),
-              route:
-                  _estimate == null ? const [] : toLatLng(_estimate!.polyline),
+              pickup: _pickup == null
+                  ? null
+                  : LatLng(_pickup!.lat, _pickup!.lng),
+              dropoff: _dropoff == null
+                  ? null
+                  : LatLng(_dropoff!.lat, _dropoff!.lng),
+              route: _estimate == null
+                  ? const []
+                  : toLatLng(_estimate!.polyline),
             ),
           ),
           // Floating back button + title chip over the map.
@@ -170,18 +192,24 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
             right: 14,
             child: Row(
               children: [
-                CircleIconButton(Icons.arrow_back,
-                    onTap: () => Navigator.pop(context)),
+                CircleIconButton(
+                  Icons.arrow_back,
+                  onTap: () => Navigator.pop(context),
+                ),
                 const SizedBox(width: 12),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
                     borderRadius: BorderRadius.circular(30),
                   ),
-                  child: const Text('Заказ поездки',
-                      style: TextStyle(fontWeight: FontWeight.w800)),
+                  child: const Text(
+                    'Заказ поездки',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
                 ),
               ],
             ),
@@ -214,31 +242,42 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 14),
                 decoration: BoxDecoration(
-                    color: AppColors.line,
-                    borderRadius: BorderRadius.circular(3)),
+                  color: AppColors.line,
+                  borderRadius: BorderRadius.circular(3),
+                ),
               ),
             ),
             _routeCard(),
             const SizedBox(height: 14),
-            const Text('Кого везём',
-                style: TextStyle(
-                    color: AppColors.muted,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600)),
+            const Text(
+              'Кого везём',
+              style: TextStyle(
+                color: AppColors.muted,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             const SizedBox(height: 8),
             _childPicker(),
             const SizedBox(height: 14),
             // Pickup time only (no calendar) — for today, tap to change.
-            _pill(Icons.access_time, 'Подача: ${DateFormat('HH:mm').format(_when)}',
-                _pickTime),
+            _pill(
+              Icons.access_time,
+              'Подача: ${DateFormat('HH:mm').format(_when)}',
+              _pickTime,
+            ),
             if (_estimating) ...[
               const SizedBox(height: 12),
               const Center(
-                  child: SizedBox(
-                      height: 22,
-                      width: 22,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: AppColors.brand))),
+                child: SizedBox(
+                  height: 22,
+                  width: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.brand,
+                  ),
+                ),
+              ),
             ] else if (_estimate != null) ...[
               const SizedBox(height: 12),
               _priceRow(_estimate!),
@@ -251,19 +290,25 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
             SizedBox(
               height: 56,
               child: ElevatedButton(
-                onPressed:
-                    (ready && _estimate != null && !_submitting) ? _submit : null,
+                onPressed: (ready && _estimate != null && !_submitting)
+                    ? _submit
+                    : null,
                 child: _submitting
                     ? const SizedBox(
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(
-                            strokeWidth: 2, color: AppColors.onBrand))
-                    : Text(_estimate != null
-                        ? 'Заказать'
-                        : ready
+                          strokeWidth: 2,
+                          color: AppColors.onBrand,
+                        ),
+                      )
+                    : Text(
+                        _estimate != null
+                            ? 'Заказать'
+                            : ready
                             ? 'Рассчитываем…'
-                            : 'Укажите маршрут'),
+                            : 'Укажите маршрут',
+                      ),
               ),
             ),
           ],
@@ -322,21 +367,25 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-        child: Row(children: [
-          SizedBox(width: 16, child: Center(child: dot)),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Text(value ?? hint,
+        child: Row(
+          children: [
+            SizedBox(width: 16, child: Center(child: dot)),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                value ?? hint,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                    fontSize: 15,
-                    fontWeight:
-                        value == null ? FontWeight.w500 : FontWeight.w700,
-                    color: value == null ? AppColors.muted : AppColors.ink)),
-          ),
-          const Icon(Icons.map_outlined, color: AppColors.brand, size: 20),
-        ]),
+                  fontSize: 15,
+                  fontWeight: value == null ? FontWeight.w500 : FontWeight.w700,
+                  color: value == null ? AppColors.muted : AppColors.ink,
+                ),
+              ),
+            ),
+            const Icon(Icons.map_outlined, color: AppColors.brand, size: 20),
+          ],
+        ),
       ),
     );
   }
@@ -360,14 +409,19 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                 color: sel ? AppColors.brand : AppColors.surface2,
                 borderRadius: BorderRadius.circular(30),
               ),
-              child: Row(children: [
-                InitialAvatar(c.fullName, radius: 17),
-                const SizedBox(width: 8),
-                Text(c.fullName,
+              child: Row(
+                children: [
+                  PhotoAvatar(name: c.fullName, photoUrl: c.photo, radius: 17),
+                  const SizedBox(width: 8),
+                  Text(
+                    c.fullName,
                     style: TextStyle(
-                        color: sel ? AppColors.onBrand : AppColors.ink,
-                        fontWeight: FontWeight.w700)),
-              ]),
+                      color: sel ? AppColors.onBrand : AppColors.ink,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         },
@@ -376,66 +430,81 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
   }
 
   Widget _priceRow(RouteEstimate e) => Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-            color: AppColors.brand.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.brand.withValues(alpha: 0.4))),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: AppColors.brand.withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: AppColors.brand.withValues(alpha: 0.4)),
+    ),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Стоимость поездки',
-                    style: TextStyle(color: AppColors.muted, fontSize: 12)),
-                const SizedBox(height: 2),
-                Text(
-                    '${e.distanceKm} км · ${e.durationMin} мин'
-                    '${e.hasTraffic ? ' · пробки' : ''}',
-                    style:
-                        const TextStyle(fontSize: 12, color: AppColors.muted)),
-              ],
+            const Text(
+              'Стоимость поездки',
+              style: TextStyle(color: AppColors.muted, fontSize: 12),
             ),
-            Text('${e.price.round()} ₸',
-                style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.brand)),
+            const SizedBox(height: 2),
+            Text(
+              '${e.distanceKm} км · ${e.durationMin} мин'
+              '${e.hasTraffic ? ' · пробки' : ''}',
+              style: const TextStyle(fontSize: 12, color: AppColors.muted),
+            ),
           ],
         ),
-      );
+        Text(
+          '${e.price.round()} ₸',
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
+            color: AppColors.brand,
+          ),
+        ),
+      ],
+    ),
+  );
 
   Widget _pill(IconData icon, String text, VoidCallback onTap) => InkWell(
+    borderRadius: BorderRadius.circular(14),
+    onTap: onTap,
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.surface2,
         borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          decoration: BoxDecoration(
-            color: AppColors.surface2,
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Row(children: [
-            Icon(icon, size: 18, color: AppColors.brand),
-            const SizedBox(width: 8),
-            Text(text, style: const TextStyle(fontWeight: FontWeight.w700)),
-          ]),
-        ),
-      );
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: AppColors.brand),
+          const SizedBox(width: 8),
+          Text(text, style: const TextStyle(fontWeight: FontWeight.w700)),
+        ],
+      ),
+    ),
+  );
 
   Widget _noChildren() => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(mainAxisSize: MainAxisSize.min, children: const [
-            Icon(Icons.child_care, size: 48, color: AppColors.muted),
-            SizedBox(height: 8),
-            Text('Сначала добавьте ребёнка',
-                style: TextStyle(fontWeight: FontWeight.w700)),
-            SizedBox(height: 4),
-            Text('Вкладка «Дети» → «Добавить ребёнка»',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.muted)),
-          ]),
-        ),
-      );
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: const [
+          Icon(Icons.child_care, size: 48, color: AppColors.muted),
+          SizedBox(height: 8),
+          Text(
+            'Сначала добавьте ребёнка',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+          SizedBox(height: 4),
+          Text(
+            'Вкладка «Дети» → «Добавить ребёнка»',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: AppColors.muted),
+          ),
+        ],
+      ),
+    ),
+  );
 }

@@ -31,13 +31,17 @@ class _ChildrenScreenState extends State<ChildrenScreen> {
 
   Future<void> _add() async {
     final added = await Navigator.push<bool>(
-        context, MaterialPageRoute(builder: (_) => const AddChildScreen()));
+      context,
+      MaterialPageRoute(builder: (_) => const AddChildScreen()),
+    );
     if (added == true) _load();
   }
 
   Future<void> _edit(Child c) async {
-    final changed = await Navigator.push<bool>(context,
-        MaterialPageRoute(builder: (_) => AddChildScreen(child: c)));
+    final changed = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => AddChildScreen(child: c)),
+    );
     if (changed == true) _load();
   }
 
@@ -46,29 +50,41 @@ class _ChildrenScreenState extends State<ChildrenScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Мои дети')),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.brand))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.brand),
+            )
           : Column(
               children: [
                 Expanded(
                   child: RefreshIndicator(
                     onRefresh: _load,
                     child: _children.isEmpty
-                        ? ListView(children: const [
-                            SizedBox(height: 120),
-                            Center(
-                              child: Column(children: [
-                                Icon(Icons.child_care,
-                                    size: 48, color: AppColors.muted),
-                                SizedBox(height: 8),
-                                Text('Добавьте первого ребёнка',
-                                    style: TextStyle(color: AppColors.muted)),
-                              ]),
-                            ),
-                          ])
+                        ? ListView(
+                            children: const [
+                              SizedBox(height: 120),
+                              Center(
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      Icons.child_care,
+                                      size: 48,
+                                      color: AppColors.muted,
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'Добавьте первого ребёнка',
+                                      style: TextStyle(color: AppColors.muted),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          )
                         : ListView.separated(
                             padding: const EdgeInsets.all(16),
                             itemCount: _children.length,
-                            separatorBuilder: (_, _) => const SizedBox(height: 12),
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(height: 12),
                             itemBuilder: (_, i) => _card(_children[i]),
                           ),
                   ),
@@ -98,74 +114,90 @@ class _ChildrenScreenState extends State<ChildrenScreen> {
     return GestureDetector(
       onTap: () => _edit(c),
       child: Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.line),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              _avatar(c),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(c.fullName,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.line),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                _avatar(c),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              c.fullName,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                  fontWeight: FontWeight.w800, fontSize: 16)),
-                        ),
-                        if (c.isPrimary) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                                color: AppColors.brand,
-                                borderRadius: BorderRadius.circular(999)),
-                            child: const Text('Основной',
-                                style: TextStyle(
-                                    fontSize: 11, fontWeight: FontWeight.w700)),
+                                fontWeight: FontWeight.w800,
+                                fontSize: 16,
+                              ),
+                            ),
                           ),
+                          if (c.isPrimary) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.brand,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: const Text(
+                                'Основной',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
-                    ),
-                    if (line.isNotEmpty)
-                      Text(line,
-                          style: const TextStyle(color: AppColors.muted)),
-                    if (c.school.isNotEmpty)
-                      Text(c.school,
-                          style: const TextStyle(color: AppColors.muted)),
-                  ],
+                      ),
+                      if (line.isNotEmpty)
+                        Text(
+                          line,
+                          style: const TextStyle(color: AppColors.muted),
+                        ),
+                      if (c.school.isNotEmpty)
+                        Text(
+                          c.school,
+                          style: const TextStyle(color: AppColors.muted),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-              const Icon(Icons.chevron_right, color: AppColors.muted),
-            ],
-          ),
-          const Divider(height: 20),
-          Text('Особенности',
-              style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
-          const SizedBox(height: 2),
-          Text(c.noteForDriver.isEmpty ? 'Нет' : c.noteForDriver,
-              style: const TextStyle(fontWeight: FontWeight.w600)),
-        ],
-      ),
+                const Icon(Icons.chevron_right, color: AppColors.muted),
+              ],
+            ),
+            const Divider(height: 20),
+            Text(
+              'Особенности',
+              style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              c.noteForDriver.isEmpty ? 'Нет' : c.noteForDriver,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _avatar(Child c) {
-    if (c.photo != null && c.photo!.isNotEmpty) {
-      return CircleAvatar(radius: 26, backgroundImage: NetworkImage(c.photo!));
-    }
-    return InitialAvatar(c.fullName, radius: 26);
+    return PhotoAvatar(name: c.fullName, photoUrl: c.photo, radius: 26);
   }
 }

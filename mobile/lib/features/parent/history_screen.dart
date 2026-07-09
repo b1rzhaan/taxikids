@@ -33,9 +33,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   String _dayLabel(DateTime d) {
     final now = DateTime.now();
-    final diff = DateTime(now.year, now.month, now.day)
-        .difference(DateTime(d.year, d.month, d.day))
-        .inDays;
+    final diff = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).difference(DateTime(d.year, d.month, d.day)).inDays;
     if (diff == 0) return 'Сегодня';
     if (diff == 1) return 'Вчера';
     return DateFormat('d MMMM', 'ru').format(d);
@@ -49,37 +51,56 @@ class _HistoryScreenState extends State<HistoryScreen> {
       final d = DateTime.tryParse(t.scheduledAt)?.toLocal() ?? DateTime.now();
       groups.putIfAbsent(_dayLabel(d), () => []).add(t);
     }
+    final active = _trips
+        .where((t) => !{'completed', 'cancelled'}.contains(t.status))
+        .length;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Мои поездки')),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.brand))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.brand),
+            )
           : RefreshIndicator(
               onRefresh: _load,
               child: _trips.isEmpty
-                  ? ListView(children: const [
-                      SizedBox(height: 120),
-                      Center(
-                        child: Column(children: [
-                          Icon(Icons.route_outlined,
-                              size: 46, color: AppColors.muted),
-                          SizedBox(height: 8),
-                          Text('Поездок пока нет',
-                              style: TextStyle(color: AppColors.muted)),
-                        ]),
-                      ),
-                    ])
+                  ? ListView(
+                      children: const [
+                        SizedBox(height: 120),
+                        Center(
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.route_outlined,
+                                size: 46,
+                                color: AppColors.muted,
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                'Поездок пока нет',
+                                style: TextStyle(color: AppColors.muted),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    )
                   : ListView(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                       children: [
+                        _summaryBand(total: _trips.length, active: active),
+                        const SizedBox(height: 18),
                         for (final entry in groups.entries) ...[
                           Padding(
                             padding: const EdgeInsets.fromLTRB(4, 12, 4, 8),
-                            child: Text(entry.key,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 15,
-                                    color: AppColors.muted)),
+                            child: Text(
+                              entry.key,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 15,
+                                color: AppColors.muted,
+                              ),
+                            ),
                           ),
                           ...entry.value.map(_tripCard),
                         ],
@@ -89,16 +110,61 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
+  Widget _summaryBand({required int total, required int active}) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.brandSoft,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.brand.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: const BoxDecoration(
+              color: AppColors.brand,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.route, color: AppColors.onBrand),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Поездки детей',
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  active > 0 ? '$active активно сейчас' : '$total в истории',
+                  style: const TextStyle(color: AppColors.muted, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right, color: AppColors.muted),
+        ],
+      ),
+    );
+  }
+
   Widget _tripCard(Trip t) {
     final d = DateTime.tryParse(t.scheduledAt)?.toLocal();
     final time = d != null ? DateFormat('HH:mm').format(d) : '';
+    final childName = t.childName ?? t.child?.fullName ?? 'РџРѕРµР·РґРєР°';
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Card(
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
-          onTap: () => Navigator.push(context,
-              MaterialPageRoute(builder: (_) => TripTrackingScreen(tripId: t.id))),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => TripTrackingScreen(tripId: t.id)),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Column(
@@ -106,18 +172,30 @@ class _HistoryScreenState extends State<HistoryScreen> {
               children: [
                 Row(
                   children: [
-                    InitialAvatar(t.childName ?? 'Р', radius: 20),
+                    PhotoAvatar(
+                      name: childName,
+                      photoUrl: t.child?.photo,
+                      radius: 22,
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(t.childName ?? 'Поездка',
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w800, fontSize: 15)),
-                          Text('$time · ${t.priceAmount} ₸',
-                              style: const TextStyle(
-                                  color: AppColors.muted, fontSize: 12)),
+                          Text(
+                            childName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 15,
+                            ),
+                          ),
+                          Text(
+                            '$time · ${t.priceAmount} ₸',
+                            style: const TextStyle(
+                              color: AppColors.muted,
+                              fontSize: 12,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -148,20 +226,22 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 decoration: BoxDecoration(color: color, shape: BoxShape.circle),
               ),
               if (top)
-                Expanded(
-                  child: Container(width: 2, color: AppColors.line),
-                ),
+                Expanded(child: Container(width: 2, color: AppColors.line)),
             ],
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Padding(
               padding: EdgeInsets.only(bottom: top ? 8 : 0),
-              child: Text(text,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w500)),
+              child: Text(
+                text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ),
           ),
         ],

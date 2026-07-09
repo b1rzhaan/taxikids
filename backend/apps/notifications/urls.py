@@ -1,7 +1,12 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .views import DeviceTokenViewSet, EmergencyRequestViewSet, NotificationViewSet
+from .views import (
+    DeviceTokenViewSet,
+    EmergencyRequestViewSet,
+    NotificationViewSet,
+    support_ai_reply,
+)
 
 # emergency + devices live under /api/notifications/… via their own router.
 sub_router = DefaultRouter()
@@ -21,5 +26,6 @@ urlpatterns = [
         NotificationViewSet.as_view({"post": "read"}),
         name="notification-read",
     ),
+    path("support/ai/", support_ai_reply, name="support-ai"),
     path("", include(sub_router.urls)),
 ]

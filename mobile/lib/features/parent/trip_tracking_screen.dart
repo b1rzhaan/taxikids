@@ -32,13 +32,15 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
     _fitDone = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       try {
-        _map.fitCamera(CameraFit.coordinates(
-          coordinates: [
-            LatLng(t.pickupLat, t.pickupLng),
-            LatLng(t.dropoffLat, t.dropoffLng),
-          ],
-          padding: const EdgeInsets.fromLTRB(50, 90, 50, 60),
-        ));
+        _map.fitCamera(
+          CameraFit.coordinates(
+            coordinates: [
+              LatLng(t.pickupLat, t.pickupLng),
+              LatLng(t.dropoffLat, t.dropoffLng),
+            ],
+            padding: const EdgeInsets.fromLTRB(50, 90, 50, 60),
+          ),
+        );
       } catch (_) {}
     });
   }
@@ -88,8 +90,12 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
   Future<void> _poll() async {
     final loc = await TripsService.track(widget.tripId);
     if (loc != null && mounted) {
-      setState(() => _driverPos =
-          LatLng((loc['lat'] as num).toDouble(), (loc['lng'] as num).toDouble()));
+      setState(
+        () => _driverPos = LatLng(
+          (loc['lat'] as num).toDouble(),
+          (loc['lng'] as num).toDouble(),
+        ),
+      );
     }
     // Refresh status quietly.
     try {
@@ -107,12 +113,16 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
         content: const Text('Если поездка оплачена — средства вернутся.'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Нет')),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Нет'),
+          ),
           TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Отменить поездку',
-                  style: TextStyle(color: AppColors.danger))),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'Отменить поездку',
+              style: TextStyle(color: AppColors.danger),
+            ),
+          ),
         ],
       ),
     );
@@ -129,7 +139,9 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Поездка')),
       body: t == null
-          ? const Center(child: CircularProgressIndicator(color: AppColors.brand))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.brand),
+            )
           : Column(
               children: [
                 Expanded(
@@ -148,9 +160,14 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
   }
 
   Widget _sheet(Trip t) {
-    final canCancel = {'created', 'waiting_payment', 'paid', 'driver_assigned'}
-        .contains(t.status);
+    final canCancel = {
+      'created',
+      'waiting_payment',
+      'paid',
+      'driver_assigned',
+    }.contains(t.status);
     final info = statusInfo(t.status);
+    final childName = t.childName ?? t.child?.fullName ?? 'РџРѕРµР·РґРєР°';
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
@@ -171,33 +188,49 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 14),
                 decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2)),
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
             Row(
               children: [
-                InitialAvatar(t.childName ?? 'Р', radius: 23),
+                PhotoAvatar(
+                  name: childName,
+                  photoUrl: t.child?.photo,
+                  radius: 23,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(t.childName ?? 'Поездка',
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.w800)),
-                      Text(info.label,
-                          style: TextStyle(
-                              color: info.color,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13)),
+                      Text(
+                        childName,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      Text(
+                        info.label,
+                        style: TextStyle(
+                          color: info.color,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                Text('${t.priceAmount} ₸',
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w800)),
+                Text(
+                  '${t.priceAmount} ₸',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 16),
@@ -216,8 +249,9 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
                 child: OutlinedButton.icon(
                   onPressed: _cancel,
                   style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.danger,
-                      side: BorderSide(color: Colors.red.shade100)),
+                    foregroundColor: AppColors.danger,
+                    side: BorderSide(color: Colors.red.shade100),
+                  ),
                   icon: const Icon(Icons.close, size: 18),
                   label: const Text('Отменить поездку'),
                 ),
@@ -264,12 +298,17 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
         width: double.infinity,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-            color: Colors.red.shade50,
-            borderRadius: BorderRadius.circular(14)),
-        child: const Text('Поездка отменена',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-                color: AppColors.danger, fontWeight: FontWeight.w700)),
+          color: Colors.red.shade50,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: const Text(
+          'Поездка отменена',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: AppColors.danger,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
       );
     }
     final cur = _stepIndex(status);
@@ -283,11 +322,13 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
               Row(
                 children: [
                   Expanded(
-                      child: i == 0
-                          ? const SizedBox()
-                          : Container(
-                              height: 3,
-                              color: i <= cur ? AppColors.brand : AppColors.line)),
+                    child: i == 0
+                        ? const SizedBox()
+                        : Container(
+                            height: 3,
+                            color: i <= cur ? AppColors.brand : AppColors.line,
+                          ),
+                  ),
                   Container(
                     height: 30,
                     width: 30,
@@ -298,24 +339,31 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
                           ? Border.all(color: AppColors.brandDark, width: 2)
                           : null,
                     ),
-                    child: Icon(_steps[i].$2,
-                        size: 16,
-                        color: done ? AppColors.ink : Colors.grey.shade400),
+                    child: Icon(
+                      _steps[i].$2,
+                      size: 16,
+                      color: done ? AppColors.ink : Colors.grey.shade400,
+                    ),
                   ),
                   Expanded(
-                      child: i == _steps.length - 1
-                          ? const SizedBox()
-                          : Container(
-                              height: 3,
-                              color: i < cur ? AppColors.brand : AppColors.line)),
+                    child: i == _steps.length - 1
+                        ? const SizedBox()
+                        : Container(
+                            height: 3,
+                            color: i < cur ? AppColors.brand : AppColors.line,
+                          ),
+                  ),
                 ],
               ),
               const SizedBox(height: 4),
-              Text(_steps[i].$1,
-                  style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: current ? FontWeight.w700 : FontWeight.w500,
-                      color: done ? AppColors.ink : AppColors.muted)),
+              Text(
+                _steps[i].$1,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: current ? FontWeight.w700 : FontWeight.w500,
+                  color: done ? AppColors.ink : AppColors.muted,
+                ),
+              ),
             ],
           ),
         );
@@ -338,8 +386,9 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
           const Padding(
             padding: EdgeInsets.only(left: 5),
             child: SizedBox(
-                height: 14,
-                child: VerticalDivider(width: 8, thickness: 1.5)),
+              height: 14,
+              child: VerticalDivider(width: 8, thickness: 1.5),
+            ),
           ),
           _addr(const Color(0xFFF97316), t.dropoffText),
           const Divider(height: 20),
@@ -357,56 +406,67 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
   }
 
   Widget _addr(Color color, String text) => Row(
-        children: [
-          Container(
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(text,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w600)),
-          ),
-        ],
-      );
+    children: [
+      Container(
+        width: 10,
+        height: 10,
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      ),
+      const SizedBox(width: 10),
+      Expanded(
+        child: Text(
+          text,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+      ),
+    ],
+  );
 
   Widget _metric(String v, String l) => Column(
-        children: [
-          Text(v, style: const TextStyle(fontWeight: FontWeight.w800)),
-          Text(l, style: const TextStyle(color: AppColors.muted, fontSize: 11)),
-        ],
-      );
+    children: [
+      Text(v, style: const TextStyle(fontWeight: FontWeight.w800)),
+      Text(l, style: const TextStyle(color: AppColors.muted, fontSize: 11)),
+    ],
+  );
 
   Widget _searching() => Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-            color: AppColors.surface2, borderRadius: BorderRadius.circular(18)),
-        child: Row(
-          children: const [
-            SizedBox(
-              height: 22,
-              width: 22,
-              child: CircularProgressIndicator(
-                  strokeWidth: 2.5, color: AppColors.brand),
-            ),
-            SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Ищем водителя…',
-                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-                  SizedBox(height: 2),
-                  Text('Подбираем проверенного водителя рядом',
-                      style: TextStyle(color: AppColors.muted, fontSize: 12)),
-                ],
-              ),
-            ),
-          ],
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: AppColors.surface2,
+      borderRadius: BorderRadius.circular(18),
+    ),
+    child: Row(
+      children: const [
+        SizedBox(
+          height: 22,
+          width: 22,
+          child: CircularProgressIndicator(
+            strokeWidth: 2.5,
+            color: AppColors.brand,
+          ),
         ),
-      );
+        SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Ищем водителя…',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+              ),
+              SizedBox(height: 2),
+              Text(
+                'Подбираем проверенного водителя рядом',
+                style: TextStyle(color: AppColors.muted, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
 
   /// Template-style driver card: photo, plate, rating, car, stats, call CTA.
   Widget _driverCard(DriverInfo d) {
@@ -431,14 +491,22 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(d.fullName,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w800, fontSize: 16)),
+                    Text(
+                      d.fullName,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                      ),
+                    ),
                     if (car.isNotEmpty)
-                      Text(car,
-                          style: const TextStyle(
-                              color: AppColors.muted, fontSize: 13)),
+                      Text(
+                        car,
+                        style: const TextStyle(
+                          color: AppColors.muted,
+                          fontSize: 13,
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -447,42 +515,57 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
                 children: [
                   PlateBadge(plate),
                   const SizedBox(height: 6),
-                  Row(children: [
-                    const Icon(Icons.star, color: AppColors.brand, size: 15),
-                    const SizedBox(width: 3),
-                    Text(d.rating,
-                        style: const TextStyle(fontWeight: FontWeight.w700)),
-                  ]),
+                  Row(
+                    children: [
+                      const Icon(Icons.star, color: AppColors.brand, size: 15),
+                      const SizedBox(width: 3),
+                      Text(
+                        d.rating,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ],
           ),
           Center(
-            child: Image.asset('assets/car.png',
-                height: 78, fit: BoxFit.contain),
+            child: Image.asset(
+              'assets/car.png',
+              height: 78,
+              fit: BoxFit.contain,
+            ),
           ),
           const SizedBox(height: 6),
-          Row(children: [
-            if (seats != null) ...[
-              Expanded(
+          Row(
+            children: [
+              if (seats != null) ...[
+                Expanded(
                   child: StatPill(
-                      icon: Icons.event_seat_outlined,
-                      value: '$seats',
-                      label: 'Мест')),
+                    icon: Icons.event_seat_outlined,
+                    value: '$seats',
+                    label: 'Мест',
+                  ),
+                ),
+                const SizedBox(width: 10),
+              ],
+              Expanded(
+                child: StatPill(
+                  icon: Icons.workspace_premium_outlined,
+                  value: '${d.experienceYears} л',
+                  label: 'Стаж',
+                ),
+              ),
               const SizedBox(width: 10),
+              Expanded(
+                child: StatPill(
+                  icon: Icons.child_care_outlined,
+                  value: d.hasChildSeat ? 'Есть' : 'Нет',
+                  label: 'Кресло',
+                ),
+              ),
             ],
-            Expanded(
-                child: StatPill(
-                    icon: Icons.workspace_premium_outlined,
-                    value: '${d.experienceYears} л',
-                    label: 'Стаж')),
-            const SizedBox(width: 10),
-            Expanded(
-                child: StatPill(
-                    icon: Icons.child_care_outlined,
-                    value: d.hasChildSeat ? 'Есть' : 'Нет',
-                    label: 'Кресло')),
-          ]),
+          ),
           if (d.phone.isNotEmpty) ...[
             const SizedBox(height: 14),
             SizedBox(

@@ -52,7 +52,7 @@ class AppBottomNav extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Container(
-        height: 118,
+        height: 104,
         color: AppColors.bg,
         child: Stack(
           clipBehavior: Clip.none,
@@ -60,56 +60,33 @@ class AppBottomNav extends StatelessWidget {
             Positioned(
               left: 20,
               right: 20,
-              bottom: 14,
-              child: ClipPath(
-                clipper: hasCenter ? _NavBarClipper() : null,
-                child: Container(
-                  height: hasCenter ? 86 : 72,
-                  padding: EdgeInsets.only(top: hasCenter ? 14 : 0),
-                  decoration: BoxDecoration(
-                    color: _barColor,
-                    borderRadius: hasCenter ? null : BorderRadius.circular(40),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 18,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: Row(children: items),
-                  ),
+              bottom: 6,
+              child: Container(
+                height: 76,
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                decoration: BoxDecoration(
+                  color: _barColor,
+                  borderRadius: BorderRadius.circular(42),
+                  border: Border.all(color: AppColors.line),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.10),
+                      blurRadius: 24,
+                      offset: const Offset(0, 12),
+                    ),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: Row(children: items),
                 ),
               ),
             ),
             if (hasCenter)
               Positioned(
-                left: 20,
-                right: 20,
-                bottom: 14,
-                child: IgnorePointer(
-                  child: Container(
-                    height: 86,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(44),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 14,
-                          offset: Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            if (hasCenter)
-              Positioned(
                 left: 0,
                 right: 0,
-                bottom: 52,
+                bottom: 48,
                 child: Material(
                   color: Colors.transparent,
                   child: Center(
@@ -122,35 +99,6 @@ class AppBottomNav extends StatelessWidget {
       ),
     );
   }
-}
-
-class _NavBarClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final w = size.width;
-    final h = size.height;
-    final c = w / 2;
-    const top = 15.0;
-    const r = 36.0;
-    const notchR = 37.0;
-    return Path()
-      ..moveTo(r, top)
-      ..lineTo(c - notchR - 14, top)
-      ..cubicTo(c - notchR + 2, top, c - notchR + 1, 0, c, 0)
-      ..cubicTo(c + notchR - 1, 0, c + notchR - 2, top, c + notchR + 14, top)
-      ..lineTo(w - r, top)
-      ..quadraticBezierTo(w, top, w, top + r)
-      ..lineTo(w, h - r)
-      ..quadraticBezierTo(w, h, w - r, h)
-      ..lineTo(r, h)
-      ..quadraticBezierTo(0, h, 0, h - r)
-      ..lineTo(0, top + r)
-      ..quadraticBezierTo(0, top, r, top)
-      ..close();
-  }
-
-  @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
 
 /// A single tappable nav destination with scale + colour + label animation.
@@ -167,36 +115,59 @@ class NavigationItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = active ? AppColors.ink : AppColors.muted;
+    final color = active ? Colors.white : AppColors.muted;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(22),
+      borderRadius: BorderRadius.circular(28),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AnimatedScale(
-              scale: active ? 1.12 : 1.0,
-              duration: const Duration(milliseconds: 260),
-              curve: Curves.easeOut,
-              child: Icon(
-                active ? dest.activeIcon : dest.icon,
-                color: color,
-                size: 24,
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 260),
+          curve: Curves.easeOutCubic,
+          height: 56,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            color: active ? const Color(0xFF202124) : Colors.transparent,
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: active
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.16),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedScale(
+                scale: active ? 1.06 : 1.0,
+                duration: const Duration(milliseconds: 260),
+                curve: Curves.easeOut,
+                child: Icon(
+                  active ? dest.activeIcon : dest.icon,
+                  color: color,
+                  size: active ? 22 : 23,
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 260),
-              style: TextStyle(
-                color: color,
-                fontSize: 10.5,
-                fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+              const SizedBox(height: 3),
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 260),
+                style: TextStyle(
+                  color: color,
+                  fontSize: 10.5,
+                  fontWeight: active ? FontWeight.w800 : FontWeight.w600,
+                ),
+                child: Text(
+                  dest.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              child: Text(dest.label),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

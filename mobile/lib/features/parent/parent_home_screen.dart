@@ -435,7 +435,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
             ),
             child: Row(
               children: [
-                InitialAvatar(c.fullName, radius: 22),
+                PhotoAvatar(name: c.fullName, photoUrl: c.photo, radius: 22),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -736,6 +736,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
   Widget _todayTile(Trip t) {
     final d = DateTime.tryParse(t.scheduledAt)?.toLocal();
     final time = d != null ? DateFormat('HH:mm').format(d) : '';
+    final childName = t.childName ?? t.child?.fullName ?? 'РџРѕРµР·РґРєР°';
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
@@ -749,20 +750,35 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
           context,
           MaterialPageRoute(builder: (_) => TripTrackingScreen(tripId: t.id)),
         ),
-        leading: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          decoration: BoxDecoration(
-            color: AppColors.brand.withValues(alpha: 0.14),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            time,
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 14,
-              color: AppColors.brand,
-            ),
-          ),
+        leading: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            PhotoAvatar(name: childName, photoUrl: t.child?.photo, radius: 23),
+            if (time.isNotEmpty)
+              Positioned(
+                right: -8,
+                bottom: -4,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.brand,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.surface, width: 2),
+                  ),
+                  child: Text(
+                    time,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 9,
+                      color: AppColors.onBrand,
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
         title: Text(
           t.childName ?? 'Поездка',
@@ -780,6 +796,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
 
   Widget _currentTrip(Trip t) {
     final eta = (t.routeDurationS / 60).round();
+    final childName = t.childName ?? t.child?.fullName ?? 'Р РµР±С‘РЅРѕРє';
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
@@ -796,10 +813,33 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
           ),
           child: Row(
             children: [
-              const CircleAvatar(
-                radius: 24,
-                backgroundColor: AppColors.brand,
-                child: Icon(Icons.local_taxi, color: AppColors.onBrand),
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  PhotoAvatar(
+                    name: childName,
+                    photoUrl: t.child?.photo,
+                    radius: 24,
+                  ),
+                  Positioned(
+                    right: -5,
+                    bottom: -3,
+                    child: Container(
+                      width: 22,
+                      height: 22,
+                      decoration: BoxDecoration(
+                        color: AppColors.brand,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.surface, width: 2),
+                      ),
+                      child: const Icon(
+                        Icons.local_taxi,
+                        color: AppColors.onBrand,
+                        size: 13,
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(width: 14),
               Expanded(

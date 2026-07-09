@@ -20,6 +20,7 @@ class TripLocationSerializer(serializers.ModelSerializer):
 
 
 class TripListSerializer(serializers.ModelSerializer):
+    child = ChildSerializer(read_only=True)
     child_name = serializers.CharField(source="child.full_name", read_only=True)
     driver_name = serializers.CharField(source="driver.full_name", read_only=True)
     parent_rating = serializers.SerializerMethodField()
@@ -28,7 +29,8 @@ class TripListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Trip
         fields = [
-            "id", "child_name", "driver_name", "pickup_text", "dropoff_text",
+            "id", "child", "child_name", "driver_name",
+            "pickup_text", "dropoff_text",
             "pickup_lat", "pickup_lng", "dropoff_lat", "dropoff_lng",
             "scheduled_at", "status", "payment_status", "payment_method",
             "price_amount", "price_currency",

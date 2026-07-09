@@ -185,3 +185,27 @@ class InitialAvatar extends StatelessWidget {
     );
   }
 }
+
+class PhotoAvatar extends StatelessWidget {
+  final String name;
+  final String? photoUrl;
+  final double radius;
+
+  const PhotoAvatar({
+    super.key,
+    required this.name,
+    this.photoUrl,
+    this.radius = 22,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final url = photoUrl?.trim() ?? '';
+    if (url.isEmpty) return InitialAvatar(name, radius: radius);
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: AppColors.brandSoft,
+      backgroundImage: NetworkImage(url),
+    );
+  }
+}

@@ -4,7 +4,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../core/api_client.dart';
 import '../../core/theme.dart';
-import '../../core/voice.dart';
 import '../../state/auth_state.dart';
 import '../../services/services.dart';
 import 'wallet_screen.dart';
@@ -102,29 +101,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           // Highlighted branded card
           _highlightCard(),
           const SizedBox(height: 14),
-          _group([
-            ValueListenableBuilder<bool>(
-              valueListenable: VoiceSettings.enabled,
-              builder: (_, on, _) => SwitchListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 2,
-                ),
-                secondary: _leadingIcon(
-                  on ? Icons.volume_up : Icons.volume_off,
-                ),
-                title: const Text(
-                  'Озвучка навигатора',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-                activeThumbColor: AppColors.onBrand,
-                activeTrackColor: AppColors.brand,
-                value: on,
-                onChanged: (v) => VoiceSettings.setEnabled(v),
-              ),
-            ),
-            _row(Icons.info_outline, 'О приложении', onTap: _showAbout),
-          ]),
+          _group([_row(Icons.info_outline, 'О приложении', onTap: _showAbout)]),
           const SizedBox(height: 20),
           OutlinedButton.icon(
             onPressed: () => auth.logout(),

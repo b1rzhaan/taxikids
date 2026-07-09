@@ -1,9 +1,11 @@
+import requests
+from django.conf import settings
 from rest_framework import mixins, viewsets
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 
 from apps.accounts.models import Role
-from apps.accounts.permissions import IsStaffRole
+from apps.accounts.permissions import IsParent, IsStaffRole
 
 from .models import DeviceToken, EmergencyRequest, Notification
 from .serializers import (
@@ -57,3 +59,63 @@ class EmergencyRequestViewSet(viewsets.ModelViewSet):
         req.handled_by = request.user
         req.save(update_fields=["status", "handled_by"])
         return Response(EmergencyRequestSerializer(req).data)
+
+
+@api_view(["POST"])
+@permission_classes([IsParent])
+def support_ai_reply(request):
+    message = (request.data.get("message") or "").strip()
+    history = request.data.get("history") or []
+    if not message:
+        return Response({"reply": "Напишите вопрос, и я помогу с поездкой."})
+
+    fallback = (
+        "Я передам это оператору, если вопрос срочный. "
+        "Пока могу помочь проверить статус поездки, оплату, маршрут или данные ребёнка."
+    )
+    if not settings.GROQ_API_KEY:
+        return Response({"reply": fallback, "provider": "local"})
+
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "Ты AI-помощник сервиса Детское такси. Отвечай кратко, "
+                "спокойно и по делу на языке пользователя. Не обещай того, "
+                "что требует оператора; предложи передать оператору при риске."
+            ),
+        }
+    ]
+    for item in history[-8:]:
+        role = "assistant" if item.get("role") == "assistant" else "user"
+        content = str(item.get("content") or "").strip()
+        if content:
+            messages.append({"role": role, "content": content[:800]})
+    messages.append({"role": "user", "content": message[:1200]})
+
+    try:
+        resp = requests.post(
+            settings.GROQ_CHAT_COMPLETIONS_URL,
+            headers={
+                "Authorization": f"Bearer {settings.GROQ_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": settings.GROQ_MODEL,
+                "messages": messages,
+                "temperature": 0.3,
+                "max_tokens": 280,
+            },
+            timeout=18,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        reply = (
+            data.get("choices", [{}])[0]
+            .get("message", {})
+            .get("content", "")
+            .strip()
+        )
+        return Response({"reply": reply or fallback, "provider": "groq"})
+    except (requests.RequestException, ValueError, KeyError, IndexError):
+        return Response({"reply": fallback, "provider": "local"})

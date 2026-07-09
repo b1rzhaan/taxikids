@@ -282,6 +282,16 @@ STRIPE_CANCEL_URL = os.getenv(
     "https://kidstransfer.fail/stripe",
 )
 
+# Groq AI assistant for parent support chat. Optional: without GROQ_API_KEY the
+# support endpoint returns a safe local fallback and still lets the parent
+# escalate to an operator.
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+GROQ_CHAT_COMPLETIONS_URL = os.getenv(
+    "GROQ_CHAT_COMPLETIONS_URL",
+    "https://api.groq.com/openai/v1/chat/completions",
+)
+
 # ── Business rules ────────────────────────────────────────────────────
 DRIVER_REVENUE_SHARE = float(os.getenv("DRIVER_REVENUE_SHARE", "0.70"))
 DEFAULT_CURRENCY = os.getenv("DEFAULT_CURRENCY", "KZT")

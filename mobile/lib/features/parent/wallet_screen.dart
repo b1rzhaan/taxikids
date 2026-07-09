@@ -112,11 +112,17 @@ class _WalletScreenState extends State<WalletScreen> {
         ).showSnackBar(SnackBar(content: Text(ApiClient.errorMessage(e))));
       }
     }
-    if (paid && mounted) {
-      _load();
+    if (!mounted) return;
+    if (paid) {
+      await _load();
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Баланс пополнен')));
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Платёж не завершён')));
     }
   }
 

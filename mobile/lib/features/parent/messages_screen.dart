@@ -5,7 +5,6 @@ import '../../core/theme.dart';
 import '../../models/models.dart';
 import '../../services/services.dart';
 import '../../widgets/ui.dart';
-import 'history_screen.dart';
 
 /// Unified inbox: notifications + support in one place (two segments).
 class MessagesScreen extends StatefulWidget {
@@ -24,21 +23,29 @@ class _MessagesScreenState extends State<MessagesScreen> {
   bool _notesLoading = true;
   // Support
   List _requests = [];
-  List<Trip> _trips = [];
+  final _chatController = TextEditingController();
+  final _chatScroll = ScrollController();
+  final List<Map<String, String>> _chat = [
+    {
+      'role': 'assistant',
+      'content':
+          'Здравствуйте! Я AI-помощник Детского такси. Могу помочь с поездкой, оплатой, маршрутом или передать вопрос оператору.',
+    },
+  ];
+  bool _aiTyping = false;
 
   @override
   void initState() {
     super.initState();
     _loadNotes();
     _loadRequests();
-    _loadTrips();
   }
 
-  Future<void> _loadTrips() async {
-    try {
-      _trips = await TripsService.list();
-    } catch (_) {}
-    if (mounted) setState(() {});
+  @override
+  void dispose() {
+    _chatController.dispose();
+    _chatScroll.dispose();
+    super.dispose();
   }
 
   Future<void> _loadNotes() async {
@@ -58,19 +65,22 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
   Future<void> _compose({bool sos = false, Trip? trip}) async {
     final controller = TextEditingController(
-        text: sos
-            ? 'SOS! Нужна срочная помощь по поездке.'
-            : trip != null
-                ? 'Вопрос по поездке #${trip.id} (${trip.childName ?? ''}): '
-                : '');
+      text: sos
+          ? 'SOS! Нужна срочная помощь по поездке.'
+          : trip != null
+          ? 'Вопрос по поездке #${trip.id} (${trip.childName ?? ''}): '
+          : '',
+    );
     final text = await showDialog<String>(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text(sos
-            ? 'Экстренная связь'
-            : trip != null
-                ? 'Помощь по поездке #${trip.id}'
-                : 'Написать оператору'),
+        title: Text(
+          sos
+              ? 'Экстренная связь'
+              : trip != null
+              ? 'Помощь по поездке #${trip.id}'
+              : 'Написать оператору',
+        ),
         content: TextField(
           controller: controller,
           maxLines: 3,
@@ -79,11 +89,13 @@ class _MessagesScreenState extends State<MessagesScreen> {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Отмена')),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Отмена'),
+          ),
           ElevatedButton(
-              onPressed: () => Navigator.pop(context, controller.text.trim()),
-              child: const Text('Отправить')),
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            child: const Text('Отправить'),
+          ),
         ],
       ),
     );
@@ -92,15 +104,80 @@ class _MessagesScreenState extends State<MessagesScreen> {
       await SupportService.send(text, type: sos ? 'sos' : 'call_request');
       _loadRequests();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Отправлено оператору')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Отправлено оператору')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(ApiClient.errorMessage(e))));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(ApiClient.errorMessage(e))));
       }
     }
+  }
+
+  Future<void> _sendChat({bool escalate = false}) async {
+    final text = _chatController.text.trim();
+    if (text.isEmpty && !escalate) return;
+    _chatController.clear();
+    if (text.isNotEmpty) {
+      setState(() => _chat.add({'role': 'user', 'content': text}));
+      _scrollChat();
+    }
+
+    if (escalate) {
+      final message = text.isEmpty
+          ? 'Нужна помощь оператора в чате поддержки.'
+          : text;
+      try {
+        await SupportService.send(message, type: 'call_request');
+        await _loadRequests();
+        setState(
+          () => _chat.add({
+            'role': 'assistant',
+            'content': 'Передал оператору. Он увидит обращение и ответит вам.',
+          }),
+        );
+      } catch (e) {
+        setState(
+          () => _chat.add({
+            'role': 'assistant',
+            'content': ApiClient.errorMessage(e),
+          }),
+        );
+      }
+      _scrollChat();
+      return;
+    }
+
+    setState(() => _aiTyping = true);
+    try {
+      final reply = await SupportService.aiReply(text, history: _chat);
+      setState(() => _chat.add({'role': 'assistant', 'content': reply}));
+    } catch (e) {
+      setState(
+        () => _chat.add({
+          'role': 'assistant',
+          'content':
+              'Не получилось ответить автоматически. Могу передать вопрос оператору.',
+        }),
+      );
+    } finally {
+      if (mounted) setState(() => _aiTyping = false);
+      _scrollChat();
+    }
+  }
+
+  void _scrollChat() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_chatScroll.hasClients) return;
+      _chatScroll.animateTo(
+        _chatScroll.position.maxScrollExtent + 120,
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   @override
@@ -154,23 +231,32 @@ class _MessagesScreenState extends State<MessagesScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(label,
-                    style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: sel ? AppColors.onBrand : AppColors.muted)),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: sel ? AppColors.onBrand : AppColors.muted,
+                  ),
+                ),
                 if (badge > 0) ...[
                   const SizedBox(width: 6),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 1,
+                    ),
                     decoration: BoxDecoration(
-                        color: sel ? AppColors.onBrand : AppColors.danger,
-                        borderRadius: BorderRadius.circular(20)),
-                    child: Text('$badge',
-                        style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            color: sel ? AppColors.brand : Colors.white)),
+                      color: sel ? AppColors.onBrand : AppColors.danger,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '$badge',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: sel ? AppColors.brand : Colors.white,
+                      ),
+                    ),
                   ),
                 ],
               ],
@@ -186,29 +272,36 @@ class _MessagesScreenState extends State<MessagesScreen> {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
       ),
-      child: Row(children: [
-        seg(0, 'Уведомления', badge: unread),
-        seg(1, 'Поддержка'),
-      ]),
+      child: Row(
+        children: [
+          seg(0, 'Уведомления', badge: unread),
+          seg(1, 'Поддержка'),
+        ],
+      ),
     );
   }
 
   // ── Notifications tab ─────────────────────────────────────────────
   Widget _notificationsTab() {
     if (_notesLoading) {
-      return const Center(child: CircularProgressIndicator(color: AppColors.brand));
+      return const Center(
+        child: CircularProgressIndicator(color: AppColors.brand),
+      );
     }
     return RefreshIndicator(
       onRefresh: _loadNotes,
       child: _notes.isEmpty
-          ? ListView(padding: const EdgeInsets.all(16), children: const [
-              SizedBox(height: 40),
-              EmptyState(
-                icon: Icons.notifications_none,
-                title: 'Пока нет уведомлений',
-                subtitle: 'Здесь появятся статусы поездок вашего ребёнка.',
-              ),
-            ])
+          ? ListView(
+              padding: const EdgeInsets.all(16),
+              children: const [
+                SizedBox(height: 40),
+                EmptyState(
+                  icon: Icons.notifications_none,
+                  title: 'Пока нет уведомлений',
+                  subtitle: 'Здесь появятся статусы поездок вашего ребёнка.',
+                ),
+              ],
+            )
           : ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: _notes.length,
@@ -220,7 +313,9 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
   IconData _noteIcon(String type) {
     if (type.contains('assigned')) return Icons.directions_car;
-    if (type.contains('on_way') || type.contains('arrived')) return Icons.near_me;
+    if (type.contains('on_way') || type.contains('arrived')) {
+      return Icons.near_me;
+    }
     if (type.contains('picked') || type.contains('progress')) {
       return Icons.child_care;
     }
@@ -246,7 +341,10 @@ class _MessagesScreenState extends State<MessagesScreen> {
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-              color: unread ? AppColors.brand.withValues(alpha: 0.6) : AppColors.line),
+            color: unread
+                ? AppColors.brand.withValues(alpha: 0.6)
+                : AppColors.line,
+          ),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -258,28 +356,41 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 color: AppColors.brand.withValues(alpha: unread ? 0.18 : 0.10),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(_noteIcon('${n['type']}'),
-                  color: AppColors.brand, size: 20),
+              child: Icon(
+                _noteIcon('${n['type']}'),
+                color: AppColors.brand,
+                size: 20,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${n['title']}',
-                      style: TextStyle(
-                          fontWeight:
-                              unread ? FontWeight.w800 : FontWeight.w600)),
+                  Text(
+                    '${n['title']}',
+                    style: TextStyle(
+                      fontWeight: unread ? FontWeight.w800 : FontWeight.w600,
+                    ),
+                  ),
                   if ('${n['body'] ?? ''}'.isNotEmpty) ...[
                     const SizedBox(height: 2),
-                    Text('${n['body']}',
-                        style: const TextStyle(
-                            color: AppColors.muted, fontSize: 13)),
+                    Text(
+                      '${n['body']}',
+                      style: const TextStyle(
+                        color: AppColors.muted,
+                        fontSize: 13,
+                      ),
+                    ),
                   ],
                   const SizedBox(height: 4),
-                  Text(_time('${n['created_at']}'),
-                      style:
-                          const TextStyle(color: AppColors.muted, fontSize: 11)),
+                  Text(
+                    _time('${n['created_at']}'),
+                    style: const TextStyle(
+                      color: AppColors.muted,
+                      fontSize: 11,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -289,7 +400,9 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 width: 8,
                 height: 8,
                 decoration: const BoxDecoration(
-                    color: AppColors.brand, shape: BoxShape.circle),
+                  color: AppColors.brand,
+                  shape: BoxShape.circle,
+                ),
               ),
           ],
         ),
@@ -299,141 +412,210 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
   // ── Support tab (order-based, Yandex-style) ───────────────────────
   Widget _supportTab() {
-    final recent = _trips.take(4).toList();
-    return RefreshIndicator(
-      onRefresh: () async {
-        await _loadTrips();
-        await _loadRequests();
-      },
-      child: ListView(
-        padding: const EdgeInsets.all(16),
+    return Column(
+      children: [
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: () async {
+              await _loadRequests();
+            },
+            child: ListView(
+              controller: _chatScroll,
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              children: [
+                _chatHeader(),
+                const SizedBox(height: 14),
+                ..._chat.map(_chatBubble),
+                if (_aiTyping) _typingBubble(),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _quickChip('??? ???????', Icons.near_me),
+                    _quickChip('???????? ? ???????', Icons.credit_card),
+                    _quickChip(
+                      '??????? ? ??????????',
+                      Icons.support_agent,
+                      escalate: true,
+                    ),
+                    _quickChip('SOS', Icons.sos, sos: true),
+                  ],
+                ),
+                if (_requests.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  _sub('??????? ?????????'),
+                  const SizedBox(height: 10),
+                  ..._requests.take(3).map(_requestTile),
+                ],
+              ],
+            ),
+          ),
+        ),
+        _chatComposer(),
+      ],
+    );
+  }
+
+  Widget _chatHeader() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.brandSoft,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.brand.withValues(alpha: 0.35)),
+      ),
+      child: const Row(
         children: [
-          const Text('С какой поездкой помочь?',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 18),
-          _sub('Ваши поездки'),
-          const SizedBox(height: 10),
-          if (recent.isEmpty)
-            const EmptyState(
-              icon: Icons.local_taxi_outlined,
-              title: 'Поездок пока нет',
-              subtitle: 'Закажите поездку — здесь появится помощь по ней.',
-            )
-          else
-            _group(recent.map(_tripHelpRow).toList()),
-          const SizedBox(height: 10),
-          _group([
-            _plainRow(Icons.list_alt, 'Все поездки',
-                onTap: () => _go(const HistoryScreen())),
-          ]),
-          const SizedBox(height: 22),
-          _sub('Другое'),
-          const SizedBox(height: 10),
-          _group([
-            _plainRow(Icons.support_agent, 'Написать оператору',
-                trailingChat: true, onTap: () => _compose()),
-            _plainRow(Icons.sos, 'Экстренная помощь (SOS)',
-                danger: true, onTap: () => _compose(sos: true)),
-          ]),
-          if (_requests.isNotEmpty) ...[
-            const SizedBox(height: 22),
-            _sub('История обращений'),
-            const SizedBox(height: 10),
-            ..._requests.map(_requestTile),
-          ],
+          SoftIcon(Icons.support_agent_outlined, size: 48),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '????????? ?? ?????',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                ),
+                SizedBox(height: 3),
+                Text(
+                  '??????? ???????? AI, ??? ????????????? ????????? ?????????.',
+                  style: TextStyle(color: AppColors.muted, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  void _go(Widget s) =>
-      Navigator.push(context, MaterialPageRoute(builder: (_) => s));
-
-  Widget _sub(String t) => Text(t,
-      style: const TextStyle(
-          color: AppColors.muted, fontSize: 13, fontWeight: FontWeight.w700));
-
-  Widget _group(List<Widget> children) {
-    final items = <Widget>[];
-    for (var i = 0; i < children.length; i++) {
-      items.add(children[i]);
-      if (i != children.length - 1) {
-        items.add(Padding(
-          padding: const EdgeInsets.only(left: 62),
-          child: Divider(height: 1, color: AppColors.line),
-        ));
-      }
-    }
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.line),
-      ),
-      child: Column(children: items),
-    );
-  }
-
-  Widget _tripHelpRow(Trip t) {
-    final d = DateTime.tryParse(t.scheduledAt)?.toLocal();
-    final when = d != null ? DateFormat('d MMM, HH:mm', 'ru').format(d) : '';
-    final cancelled = t.status == 'cancelled';
-    return ListTile(
-      onTap: () => _compose(trip: t),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      leading: Container(
-        height: 40,
-        width: 40,
+  Widget _chatBubble(Map<String, String> m) {
+    final mine = m['role'] == 'user';
+    return Align(
+      alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.76,
+        ),
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         decoration: BoxDecoration(
-            color: AppColors.brand.withValues(alpha: 0.14),
-            borderRadius: BorderRadius.circular(12)),
-        child: const Icon(Icons.local_taxi, color: AppColors.brand, size: 20),
-      ),
-      title: Text('Поездка · $when',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-      subtitle: Text(
-          cancelled ? 'Отменено' : '${t.priceAmount} ₸ · ${t.dropoffText}',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+          color: mine ? AppColors.brand : AppColors.surface,
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(18),
+            topRight: const Radius.circular(18),
+            bottomLeft: Radius.circular(mine ? 18 : 4),
+            bottomRight: Radius.circular(mine ? 4 : 18),
+          ),
+          border: mine ? null : Border.all(color: AppColors.line),
+        ),
+        child: Text(
+          m['content'] ?? '',
           style: TextStyle(
-              color: cancelled ? AppColors.danger : AppColors.muted,
-              fontSize: 12)),
-      trailing: Container(
-        height: 36,
-        width: 36,
-        decoration:
-            const BoxDecoration(color: AppColors.surface2, shape: BoxShape.circle),
-        child: const Icon(Icons.chat_bubble_outline,
-            color: AppColors.brand, size: 18),
+            color: mine ? AppColors.onBrand : AppColors.ink,
+            height: 1.25,
+            fontWeight: mine ? FontWeight.w700 : FontWeight.w500,
+          ),
+        ),
       ),
     );
   }
 
-  Widget _plainRow(IconData icon, String title,
-      {VoidCallback? onTap, bool trailingChat = false, bool danger = false}) {
-    return ListTile(
-      onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-      leading: Container(
-        height: 38,
-        width: 38,
-        decoration: BoxDecoration(
-            color: (danger ? AppColors.danger : AppColors.brand)
-                .withValues(alpha: 0.14),
-            borderRadius: BorderRadius.circular(11)),
-        child: Icon(icon,
-            color: danger ? AppColors.danger : AppColors.brand, size: 20),
+  Widget _typingBubble() {
+    return const Align(
+      alignment: Alignment.centerLeft,
+      child: Padding(
+        padding: EdgeInsets.only(bottom: 10),
+        child: Chip(
+          avatar: SizedBox(
+            width: 14,
+            height: 14,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppColors.brand,
+            ),
+          ),
+          label: Text('AI ????????...'),
+        ),
       ),
-      title: Text(title,
-          style: TextStyle(
-              fontWeight: FontWeight.w600,
-              color: danger ? AppColors.danger : AppColors.ink)),
-      trailing: Icon(trailingChat ? Icons.chat_bubble_outline : Icons.chevron_right,
-          color: AppColors.muted, size: trailingChat ? 20 : 24),
     );
   }
+
+  Widget _quickChip(
+    String label,
+    IconData icon, {
+    bool escalate = false,
+    bool sos = false,
+  }) {
+    return ActionChip(
+      avatar: Icon(icon, size: 17),
+      label: Text(label),
+      onPressed: () {
+        if (sos) {
+          _compose(sos: true);
+          return;
+        }
+        if (escalate) {
+          _sendChat(escalate: true);
+          return;
+        }
+        _chatController.text = label;
+        _sendChat();
+      },
+    );
+  }
+
+  Widget _chatComposer() {
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+        decoration: const BoxDecoration(
+          color: AppColors.bg,
+          border: Border(top: BorderSide(color: AppColors.line)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _chatController,
+                minLines: 1,
+                maxLines: 4,
+                textInputAction: TextInputAction.send,
+                onSubmitted: (_) => _sendChat(),
+                decoration: const InputDecoration(
+                  hintText: '???????? ?????????...',
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton.filled(
+              onPressed: _aiTyping ? null : () => _sendChat(),
+              style: IconButton.styleFrom(
+                backgroundColor: AppColors.brand,
+                foregroundColor: AppColors.onBrand,
+              ),
+              icon: const Icon(Icons.send),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _sub(String t) => Text(
+    t,
+    style: const TextStyle(
+      color: AppColors.muted,
+      fontSize: 13,
+      fontWeight: FontWeight.w700,
+    ),
+  );
 
   Widget _requestTile(dynamic r) {
     final sos = r['type'] == 'sos';
@@ -452,25 +634,33 @@ class _MessagesScreenState extends State<MessagesScreen> {
             height: 40,
             width: 40,
             decoration: BoxDecoration(
-              color: (sos ? AppColors.danger : AppColors.brand)
-                  .withValues(alpha: 0.16),
+              color: (sos ? AppColors.danger : AppColors.brand).withValues(
+                alpha: 0.16,
+              ),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(sos ? Icons.sos : Icons.chat_bubble_outline,
-                color: sos ? AppColors.danger : AppColors.brand, size: 20),
+            child: Icon(
+              sos ? Icons.sos : Icons.chat_bubble_outline,
+              color: sos ? AppColors.danger : AppColors.brand,
+              size: 20,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('${r['message'] ?? ''}',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                Text(
+                  '${r['message'] ?? ''}',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
                 const SizedBox(height: 4),
-                Text(_fmt('${r['created_at']}'),
-                    style: const TextStyle(color: AppColors.muted, fontSize: 12)),
+                Text(
+                  _fmt('${r['created_at']}'),
+                  style: const TextStyle(color: AppColors.muted, fontSize: 12),
+                ),
               ],
             ),
           ),
@@ -481,8 +671,10 @@ class _MessagesScreenState extends State<MessagesScreen> {
               color: AppColors.surface2,
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Text('${r['status'] ?? ''}',
-                style: const TextStyle(fontSize: 11, color: AppColors.muted)),
+            child: Text(
+              '${r['status'] ?? ''}',
+              style: const TextStyle(fontSize: 11, color: AppColors.muted),
+            ),
           ),
         ],
       ),
@@ -508,8 +700,10 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
   String _fmt(String iso) {
     try {
-      return DateFormat('d MMM, HH:mm', 'ru')
-          .format(DateTime.parse(iso).toLocal());
+      return DateFormat(
+        'd MMM, HH:mm',
+        'ru',
+      ).format(DateTime.parse(iso).toLocal());
     } catch (_) {
       return '';
     }
