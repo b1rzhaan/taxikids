@@ -86,7 +86,7 @@ class AppBottomNav extends StatelessWidget {
               Positioned(
                 left: 0,
                 right: 0,
-                bottom: 48,
+                bottom: 12,
                 child: Material(
                   color: Colors.transparent,
                   child: Center(

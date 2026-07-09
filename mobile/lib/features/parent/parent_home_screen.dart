@@ -640,58 +640,38 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
   }
 
   Widget _todayPlanEmpty() {
-    return GestureDetector(
-      onTap: _order,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppColors.line),
-        ),
-        child: Column(
-          children: [
-            Row(
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.line),
+      ),
+      child: const Row(
+        children: [
+          SoftIcon(Icons.verified_user_outlined, size: 48),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SoftIcon(Icons.alt_route_outlined, size: 48),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'День свободен',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      SizedBox(height: 3),
-                      Text(
-                        'Создайте маршрут за минуту',
-                        style: TextStyle(color: AppColors.muted, fontSize: 12),
-                      ),
-                    ],
-                  ),
+                Text(
+                  'Безопасность под контролем',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
                 ),
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: const BoxDecoration(
-                    color: AppColors.brand,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.add,
-                    color: AppColors.onBrand,
-                    size: 18,
+                SizedBox(height: 4),
+                Text(
+                  'Водители проверены, статусы поездки и геометка приходят в приложении.',
+                  style: TextStyle(
+                    color: AppColors.muted,
+                    fontSize: 12,
+                    height: 1.25,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 14),
-            const _RoutePreview(),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -965,66 +945,6 @@ class _ChecklistItem extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _RoutePreview extends StatelessWidget {
-  const _RoutePreview();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.surface2,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Row(
-        children: [
-          Column(
-            children: [
-              _routeDot(AppColors.brand),
-              Container(width: 2, height: 26, color: AppColors.line),
-              _routeDot(const Color(0xFFF97316)),
-            ],
-          ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Откуда забрать ребёнка',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
-                ),
-                SizedBox(height: 12),
-                Text(
-                  'Куда отвезти',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: AppColors.muted,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Icon(Icons.chevron_right, color: AppColors.muted),
-        ],
-      ),
-    );
-  }
-
-  Widget _routeDot(Color color) {
-    return Container(
-      width: 10,
-      height: 10,
-      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
 }

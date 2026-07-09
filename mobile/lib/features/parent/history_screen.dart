@@ -51,9 +51,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
       final d = DateTime.tryParse(t.scheduledAt)?.toLocal() ?? DateTime.now();
       groups.putIfAbsent(_dayLabel(d), () => []).add(t);
     }
-    final active = _trips
+    final activeTrips = _trips
         .where((t) => !{'completed', 'cancelled'}.contains(t.status))
-        .length;
+        .toList();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Мои поездки')),
@@ -88,7 +88,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   : ListView(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                       children: [
-                        _summaryBand(total: _trips.length, active: active),
+                        _summaryBand(
+                          total: _trips.length,
+                          activeTrips: activeTrips,
+                        ),
                         const SizedBox(height: 18),
                         for (final entry in groups.entries) ...[
                           Padding(
@@ -110,44 +113,71 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  Widget _summaryBand({required int total, required int active}) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.brandSoft,
+  Widget _summaryBand({required int total, required List<Trip> activeTrips}) {
+    final active = activeTrips.length;
+    final activeTrip = activeTrips.isNotEmpty ? activeTrips.first : null;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.brand.withValues(alpha: 0.35)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: const BoxDecoration(
-              color: AppColors.brand,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.route, color: AppColors.onBrand),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Поездки детей',
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+        onTap: activeTrip == null
+            ? null
+            : () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => TripTrackingScreen(tripId: activeTrip.id),
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  active > 0 ? '$active активно сейчас' : '$total в истории',
-                  style: const TextStyle(color: AppColors.muted, fontSize: 13),
-                ),
-              ],
-            ),
+              ),
+        child: Ink(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.brandSoft,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: AppColors.brand.withValues(alpha: 0.35)),
           ),
-          const Icon(Icons.chevron_right, color: AppColors.muted),
-        ],
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: const BoxDecoration(
+                  color: AppColors.brand,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.route, color: AppColors.onBrand),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Поездки детей',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 18,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      active > 0
+                          ? '$active активно сейчас'
+                          : '$total в истории',
+                      style: const TextStyle(
+                        color: AppColors.muted,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                activeTrip == null ? Icons.history : Icons.chevron_right,
+                color: AppColors.muted,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -155,7 +185,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget _tripCard(Trip t) {
     final d = DateTime.tryParse(t.scheduledAt)?.toLocal();
     final time = d != null ? DateFormat('HH:mm').format(d) : '';
-    final childName = t.childName ?? t.child?.fullName ?? 'РџРѕРµР·РґРєР°';
+    final childName = t.childName ?? t.child?.fullName ?? 'Поездка';
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Card(

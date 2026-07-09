@@ -432,10 +432,10 @@ class _MessagesScreenState extends State<MessagesScreen> {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    _quickChip('??? ???????', Icons.near_me),
-                    _quickChip('???????? ? ???????', Icons.credit_card),
+                    _quickChip('Где машина?', Icons.near_me),
+                    _quickChip('Проблема с оплатой', Icons.credit_card),
                     _quickChip(
-                      '??????? ? ??????????',
+                      'Связать с оператором',
                       Icons.support_agent,
                       escalate: true,
                     ),
@@ -444,7 +444,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 ),
                 if (_requests.isNotEmpty) ...[
                   const SizedBox(height: 20),
-                  _sub('??????? ?????????'),
+                  _sub('История обращений'),
                   const SizedBox(height: 10),
                   ..._requests.take(3).map(_requestTile),
                 ],
@@ -474,12 +474,12 @@ class _MessagesScreenState extends State<MessagesScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '????????? ?? ?????',
+                  'Поддержка на связи',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
                 ),
                 SizedBox(height: 3),
                 Text(
-                  '??????? ???????? AI, ??? ????????????? ????????? ?????????.',
+                  'Сначала отвечает AI, при необходимости подключим оператора.',
                   style: TextStyle(color: AppColors.muted, fontSize: 12),
                 ),
               ],
@@ -536,7 +536,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
               color: AppColors.brand,
             ),
           ),
-          label: Text('AI ????????...'),
+          label: Text('AI печатает...'),
         ),
       ),
     );
@@ -585,7 +585,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 textInputAction: TextInputAction.send,
                 onSubmitted: (_) => _sendChat(),
                 decoration: const InputDecoration(
-                  hintText: '???????? ?????????...',
+                  hintText: 'Напишите сообщение...',
                   contentPadding: EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 12,
