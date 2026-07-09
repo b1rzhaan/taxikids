@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import '../../core/map_style.dart';
 import '../../core/theme.dart';
@@ -33,6 +34,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
   Timer? _timer;
   bool _arrived = false;
   double _heading = 0;
+  LatLng? _gps;
 
   @override
   void initState() {
@@ -44,7 +46,8 @@ class _NavigationScreenState extends State<NavigationScreen> {
       );
       return;
     }
-    _timer = Timer.periodic(const Duration(milliseconds: 1100), (_) => _tick());
+    _timer = Timer.periodic(const Duration(seconds: 2), (_) => _syncGps());
+    _syncGps();
   }
 
   @override
@@ -53,27 +56,53 @@ class _NavigationScreenState extends State<NavigationScreen> {
     super.dispose();
   }
 
-  Future<void> _tick() async {
-    if (_i >= _route.length - 1) {
-      _timer?.cancel();
-      if (mounted) setState(() => _arrived = true);
-      return;
-    }
-    setState(() {
-      _heading = _bearing(_route[_i], _route[_i + 1]);
-      _i++;
-    });
-    // Yandex-style camera: rotate the map so travel direction points up, and
-    // center it ahead of the car so the car sits in the lower third.
-    final center = _offsetAhead(_route[_i], _heading, 130);
-    _map.moveAndRotate(center, 17, -_heading);
+  Future<void> _syncGps() async {
     try {
+      var perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm == LocationPermission.denied ||
+          perm == LocationPermission.deniedForever) {
+        return;
+      }
+      final p = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 8),
+        ),
+      );
+      final gps = LatLng(p.latitude, p.longitude);
+      final nearest = _nearestRouteIndex(gps);
+      setState(() {
+        _gps = gps;
+        _i = nearest;
+        if (_i < _route.length - 1) {
+          _heading = _bearing(_route[_i], _route[_i + 1]);
+        }
+        _arrived = _dist(gps, _route.last) < 25;
+      });
+      final center = _offsetAhead(gps, _heading, 130);
+      _map.moveAndRotate(center, 17, -_heading);
       await TripsService.sendLocation(
         widget.trip.id,
-        _route[_i].latitude,
-        _route[_i].longitude,
+        gps.latitude,
+        gps.longitude,
       );
     } catch (_) {}
+  }
+
+  int _nearestRouteIndex(LatLng p) {
+    var best = 0;
+    var bestM = double.infinity;
+    for (var i = 0; i < _route.length; i++) {
+      final d = _dist(p, _route[i]);
+      if (d < bestM) {
+        bestM = d;
+        best = i;
+      }
+    }
+    return best;
   }
 
   // ── Geometry helpers ────────────────────────────────────────────────
@@ -160,7 +189,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
   @override
   Widget build(BuildContext context) {
     if (_route.length < 2) return const SizedBox.shrink();
-    final pos = _route[_i];
+    final pos = _gps ?? _route[_i];
     final turn = _nextTurn;
     return Scaffold(
       body: Stack(

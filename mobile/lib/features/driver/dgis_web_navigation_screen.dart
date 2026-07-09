@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
@@ -46,6 +47,8 @@ class _DgisWebNavigationScreenState extends State<DgisWebNavigationScreen> {
   double _remainingKm = 0;
   int _etaMin = 0;
   double _progress = 0;
+  Timer? _gpsTimer;
+  bool _trafficOn = true;
 
   @override
   void initState() {
@@ -71,6 +74,7 @@ class _DgisWebNavigationScreenState extends State<DgisWebNavigationScreen> {
       ..addJavaScriptChannel('KT', onMessageReceived: _onJsMessage)
       ..loadHtmlString(_html(key));
     setState(() => _controller = controller);
+    _gpsTimer = Timer.periodic(const Duration(seconds: 2), (_) => _syncGps());
   }
 
   /// Always build a FRESH 2GIS route so it follows real roads (the trip's
@@ -145,11 +149,6 @@ class _DgisWebNavigationScreenState extends State<DgisWebNavigationScreen> {
           _etaMin = (m['etaMin'] as num).toInt();
           _progress = (m['progress'] as num).toDouble().clamp(0, 1);
           setState(() {});
-          TripsService.sendLocation(
-            widget.trip.id,
-            (m['lat'] as num).toDouble(),
-            (m['lng'] as num).toDouble(),
-          );
           break;
         case 'voice':
           Speaker.say('${m['text']}');
@@ -166,8 +165,35 @@ class _DgisWebNavigationScreenState extends State<DgisWebNavigationScreen> {
 
   @override
   void dispose() {
+    _gpsTimer?.cancel();
     Speaker.stop();
     super.dispose();
+  }
+
+  Future<void> _syncGps() async {
+    final gps = await _currentGps();
+    final controller = _controller;
+    if (gps == null || controller == null) return;
+    final lat = gps.$1;
+    final lng = gps.$2;
+    try {
+      await controller.runJavaScript(
+        'window.updatePosition && window.updatePosition($lng, $lat);',
+      );
+    } catch (_) {}
+    try {
+      await TripsService.sendLocation(widget.trip.id, lat, lng);
+    } catch (_) {}
+  }
+
+  Future<void> _toggleTraffic() async {
+    final next = !_trafficOn;
+    setState(() => _trafficOn = next);
+    try {
+      await _controller?.runJavaScript(
+        'window.setTraffic && window.setTraffic(${next ? 'true' : 'false'});',
+      );
+    } catch (_) {}
   }
 
   String get _routeJson {
@@ -267,6 +293,25 @@ class _DgisWebNavigationScreenState extends State<DgisWebNavigationScreen> {
                 color: Colors.white,
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          InkResponse(
+            onTap: _toggleTraffic,
+            child: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: _trafficOn
+                    ? AppColors.brand.withValues(alpha: 0.95)
+                    : Colors.white24,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.traffic_outlined,
+                color: _trafficOn ? AppColors.onBrand : Colors.white,
+                size: 20,
               ),
             ),
           ),
@@ -500,8 +545,16 @@ class _DgisWebNavigationScreenState extends State<DgisWebNavigationScreen> {
     function start(){
       var startPt = ROUTE.length ? ROUTE[0] : DEST;
       var map = new mapgl.Map('map', {
-        center: startPt, zoom: 18, pitch: 60, rotation: 0, key: KEY, disableHidingPois: false
+        center: startPt, zoom: 18, pitch: 60, rotation: 0, key: KEY,
+        disableHidingPois: false, trafficOn: true, trafficControl: false
       });
+      window.setTraffic = function(on) {
+        try {
+          if (on && map.showTraffic) map.showTraffic();
+          if (!on && map.hideTraffic) map.hideTraffic();
+          if (map.patchStyleState) map.patchStyleState({ trafficOn: !!on });
+        } catch(e) {}
+      };
       try { map.on('styleload', function(){ hideClutter(map); }); } catch(e){}
       hideClutter(map);
 
@@ -528,16 +581,29 @@ class _DgisWebNavigationScreenState extends State<DgisWebNavigationScreen> {
 
       if (ROUTE.length < 2) { post({type:'done'}); return; }
 
-      // Demo speed: natural driving pace (~50 km/h), not teleporting.
-      var DEMO = 14; // m/s
-      var traveled = 0, lastPost = 0, lastT = performance.now();
-      function frame(now){
-        var dt = (now-lastT)/1000; lastT = now;
-        traveled += DEMO*dt;
-        if (traveled >= TOTAL) {
-          car.setCoordinates(DEST); map.setCenter(DEST);
+      function nearestProgress(pt){
+        var best = { d: 1e18, dist: 0, seg: 0 };
+        for (var i=0; i<ROUTE.length-1; i++){
+          var a=ROUTE[i], b=ROUTE[i+1];
+          var ax=a[0], ay=a[1], bx=b[0], by=b[1], px=pt[0], py=pt[1];
+          var vx=bx-ax, vy=by-ay;
+          var len2=vx*vx+vy*vy;
+          var t=len2>0 ? Math.max(0, Math.min(1, ((px-ax)*vx+(py-ay)*vy)/len2)) : 0;
+          var proj=[ax+vx*t, ay+vy*t];
+          var d=hav(pt, proj);
+          if (d < best.d) best = { d:d, dist:CUM[i]+hav(a, proj), seg:i };
+        }
+        return best;
+      }
+
+      window.updatePosition = function(lng, lat){
+        var pt = [lng, lat];
+        var p = nearestProgress(pt);
+        var traveled = Math.max(0, Math.min(TOTAL, p.dist));
+        if (traveled >= TOTAL - 20) {
+          car.setCoordinates(pt); map.setCenter(pt);
           if (casing) casing.destroy(); if (line) line.destroy();
-          post({type:'pos', lat:DEST[1], lng:DEST[0], remainingKm:0, etaMin:0, progress:1});
+          post({type:'pos', lat:lat, lng:lng, remainingKm:0, etaMin:0, progress:1});
           post({type:'voice', text:'Вы прибыли на место'});
           post({type:'done'});
           return;
@@ -552,20 +618,15 @@ class _DgisWebNavigationScreenState extends State<DgisWebNavigationScreen> {
             break;
           }
         }
-        var s = along(traveled);
-        car.setCoordinates(s.pt);
-        map.setCenter(s.pt);
-        map.setRotation(-s.hd);
-        if (s.seg !== lastSeg) { drawRemaining(s.seg, s.pt); lastSeg = s.seg; }
-        if (now - lastPost > 500) {
-          lastPost = now;
-          var remM = TOTAL - traveled;
-          post({ type:'pos', lat:s.pt[1], lng:s.pt[0], remainingKm: remM/1000,
-                 etaMin: Math.ceil(remM/SPEED/60), progress: traveled/TOTAL });
-        }
-        requestAnimationFrame(frame);
-      }
-      requestAnimationFrame(frame);
+        var hd = bearing(ROUTE[p.seg], ROUTE[p.seg+1]);
+        car.setCoordinates(pt);
+        map.setCenter(pt);
+        map.setRotation(-hd);
+        if (p.seg !== lastSeg) { drawRemaining(p.seg, pt); lastSeg = p.seg; }
+        var remM = TOTAL - traveled;
+        post({ type:'pos', lat:lat, lng:lng, remainingKm: remM/1000,
+               etaMin: Math.ceil(remM/SPEED/60), progress: traveled/TOTAL });
+      };
     }
 
     if (window.mapgl) start();
