@@ -5,6 +5,7 @@ from .views import (
     DeviceTokenViewSet,
     EmergencyRequestViewSet,
     NotificationViewSet,
+    SupportThreadViewSet,
     support_ai_reply,
 )
 
@@ -12,6 +13,7 @@ from .views import (
 sub_router = DefaultRouter()
 sub_router.register("emergency", EmergencyRequestViewSet, basename="emergency")
 sub_router.register("devices", DeviceTokenViewSet, basename="device")
+sub_router.register("support/threads", SupportThreadViewSet, basename="support-thread")
 
 urlpatterns = [
     # Explicit notification routes so the list isn't shadowed by a router root.

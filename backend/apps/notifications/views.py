@@ -1,17 +1,22 @@
 import requests
 from django.conf import settings
+from django.utils import timezone
 from rest_framework import mixins, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.exceptions import PermissionDenied, ValidationError
 
-from apps.accounts.models import Role
+from apps.accounts.models import Role, User
 from apps.accounts.permissions import IsParent, IsStaffRole
 
-from .models import DeviceToken, EmergencyRequest, Notification
+from .models import DeviceToken, EmergencyRequest, Notification, SupportMessage, SupportThread
 from .serializers import (
     DeviceTokenSerializer,
     EmergencyRequestSerializer,
     NotificationSerializer,
+    SupportMessageSerializer,
+    SupportThreadSerializer,
 )
 
 
@@ -59,6 +64,90 @@ class EmergencyRequestViewSet(viewsets.ModelViewSet):
         req.handled_by = request.user
         req.save(update_fields=["status", "handled_by"])
         return Response(EmergencyRequestSerializer(req).data)
+
+
+class SupportThreadViewSet(viewsets.ModelViewSet):
+    serializer_class = SupportThreadSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = (
+            SupportThread.objects.select_related("participant", "assigned_to", "trip")
+            .prefetch_related("messages")
+            .all()
+        )
+        if user.role in (Role.ADMIN, Role.OPERATOR):
+            return qs
+        if user.role == Role.ACCOUNTANT:
+            return qs.filter(assigned_to=user)
+        return qs.filter(participant=user)
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        participant = user
+        if user.role in (Role.ADMIN, Role.OPERATOR):
+            participant_id = self.request.data.get("participant")
+            if not participant_id:
+                raise ValidationError({"participant": "Укажите клиента или водителя."})
+            try:
+                participant = User.objects.get(pk=participant_id)
+            except User.DoesNotExist as exc:
+                raise ValidationError({"participant": "Пользователь не найден."}) from exc
+
+        thread = serializer.save(
+            participant=participant,
+            assigned_to=user if user.role in (Role.ADMIN, Role.OPERATOR) else None,
+            last_message_at=timezone.now(),
+        )
+        body = (self.request.data.get("message") or "").strip()
+        if body:
+            SupportMessage.objects.create(
+                thread=thread,
+                sender=user,
+                sender_role=self._sender_role(user),
+                body=body,
+            )
+
+    @action(detail=True, methods=["post"])
+    def messages(self, request, pk=None):
+        thread = self.get_object()
+        user = request.user
+        if user.role not in (Role.ADMIN, Role.OPERATOR) and thread.participant_id != user.id:
+            raise PermissionDenied("Нет доступа к этому чату.")
+
+        body = (request.data.get("body") or request.data.get("message") or "").strip()
+        if not body:
+            raise ValidationError({"body": "Введите сообщение."})
+
+        if user.role in (Role.ADMIN, Role.OPERATOR) and not thread.assigned_to_id:
+            thread.assigned_to = user
+        if thread.status == SupportThread.Status.OPEN and user.role in (Role.ADMIN, Role.OPERATOR):
+            thread.status = SupportThread.Status.IN_PROGRESS
+        thread.last_message_at = timezone.now()
+        thread.save(update_fields=["assigned_to", "status", "last_message_at", "updated_at"])
+
+        message = SupportMessage.objects.create(
+            thread=thread,
+            sender=user,
+            sender_role=self._sender_role(user),
+            body=body,
+        )
+        return Response(SupportMessageSerializer(message).data, status=201)
+
+    @action(detail=True, methods=["post"], permission_classes=[IsStaffRole])
+    def resolve(self, request, pk=None):
+        thread = self.get_object()
+        thread.status = SupportThread.Status.RESOLVED
+        thread.assigned_to = request.user
+        thread.last_message_at = timezone.now()
+        thread.save(update_fields=["status", "assigned_to", "last_message_at", "updated_at"])
+        return Response(SupportThreadSerializer(thread).data)
+
+    def _sender_role(self, user):
+        if user.role in {Role.PARENT, Role.DRIVER, Role.OPERATOR, Role.ADMIN, Role.ACCOUNTANT}:
+            return user.role
+        return SupportMessage.SenderRole.SYSTEM
 
 
 @api_view(["POST"])

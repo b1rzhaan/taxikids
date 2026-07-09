@@ -32,6 +32,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
           'Здравствуйте! Я AI-помощник Детского такси. Могу помочь с поездкой, оплатой, маршрутом или передать вопрос оператору.',
     },
   ];
+  int? _supportThreadId;
   bool _aiTyping = false;
 
   @override
@@ -39,6 +40,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
     super.initState();
     _loadNotes();
     _loadRequests();
+    _loadSupportThread();
   }
 
   @override
@@ -61,6 +63,25 @@ class _MessagesScreenState extends State<MessagesScreen> {
       _requests = await SupportService.myRequests();
     } catch (_) {}
     if (mounted) setState(() {});
+  }
+
+  Future<void> _loadSupportThread() async {
+    try {
+      final threads = await SupportService.threads();
+      if (threads.isEmpty) return;
+      final thread = threads.first;
+      final messages = List<Map<String, dynamic>>.from(
+        thread['messages'] as List? ?? const [],
+      );
+      if (!mounted || messages.isEmpty) return;
+      setState(() {
+        _supportThreadId = thread['id'] as int?;
+        _chat
+          ..clear()
+          ..addAll(messages.map(_supportMessageToChat));
+      });
+      _scrollChat();
+    } catch (_) {}
   }
 
   Future<void> _compose({bool sos = false, Trip? trip}) async {
@@ -121,6 +142,24 @@ class _MessagesScreenState extends State<MessagesScreen> {
     final text = _chatController.text.trim();
     if (text.isEmpty && !escalate) return;
     _chatController.clear();
+
+    if (_supportThreadId != null && !escalate) {
+      setState(() => _chat.add({'role': 'user', 'content': text}));
+      _scrollChat();
+      try {
+        await SupportService.sendThreadMessage(_supportThreadId!, text);
+      } catch (e) {
+        setState(
+          () => _chat.add({
+            'role': 'assistant',
+            'content': ApiClient.errorMessage(e),
+          }),
+        );
+      }
+      _scrollChat();
+      return;
+    }
+
     if (text.isNotEmpty) {
       setState(() => _chat.add({'role': 'user', 'content': text}));
       _scrollChat();
@@ -131,7 +170,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
           ? 'Нужна помощь оператора в чате поддержки.'
           : text;
       try {
-        await SupportService.send(message, type: 'call_request');
+        final thread = await SupportService.send(message, type: 'call_request');
+        _supportThreadId = thread['id'] as int?;
         await _loadRequests();
         setState(
           () => _chat.add({
@@ -167,6 +207,15 @@ class _MessagesScreenState extends State<MessagesScreen> {
       if (mounted) setState(() => _aiTyping = false);
       _scrollChat();
     }
+  }
+
+  Map<String, String> _supportMessageToChat(Map<String, dynamic> message) {
+    final role = '${message['sender_role'] ?? ''}';
+    final fromUser = role == 'parent' || role == 'driver';
+    return {
+      'role': fromUser ? 'user' : 'assistant',
+      'content': '${message['body'] ?? ''}',
+    };
   }
 
   void _scrollChat() {

@@ -402,6 +402,29 @@ class SupportService {
   static Future<List> myRequests() async =>
       _results(await _api.get('/notifications/emergency/'));
 
+  static Future<List<Map<String, dynamic>>> threads() async {
+    final data = await _api.get('/notifications/support/threads/?page_size=20');
+    return _results(data).map((e) => Map<String, dynamic>.from(e)).toList();
+  }
+
+  static Future<Map<String, dynamic>> openThread(String message) async {
+    final data = await _api.post('/notifications/support/threads/', {
+      'subject': 'Поддержка',
+      'message': message,
+    });
+    return Map<String, dynamic>.from(data);
+  }
+
+  static Future<Map<String, dynamic>> sendThreadMessage(
+    int threadId,
+    String message,
+  ) async {
+    final data = await _api.post('/notifications/support/threads/$threadId/messages/', {
+      'body': message,
+    });
+    return Map<String, dynamic>.from(data);
+  }
+
   static Future<String> aiReply(
     String message, {
     List<Map<String, String>> history = const [],
@@ -415,14 +438,16 @@ class SupportService {
     return '${data['reply'] ?? ''}';
   }
 
-  static Future<void> send(
+  static Future<Map<String, dynamic>> send(
     String message, {
     String type = 'call_request',
   }) async {
+    final thread = await openThread(message);
     await _api.post('/notifications/emergency/', {
       'type': type,
       'message': message,
     });
+    return thread;
   }
 }
 

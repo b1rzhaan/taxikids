@@ -1,135 +1,976 @@
-# KidsTransfer — сервис безопасной перевозки детей
+# Детское такси - платформа безопасной перевозки детей
 
-MVP-платформа: родители заказывают перевозку ребёнка, штатные водители выполняют
-поездки, а оператор/админ/бухгалтер управляют всем через веб-кабинет.
+`Детское такси` - MVP-платформа для безопасной перевозки детей: родители оформляют поездки для ребенка, штатные водители выполняют заказы, а оператор, администратор и бухгалтер управляют процессами через веб-кабинет.
 
-Три приоритетных модуля: **карта и маршруты (с пробками)**, **платежи/банк**
-и **ядро заказов со стейт-машиной поездки**.
+Проект состоит из трех основных частей:
 
-## Стек
+- **Backend API** - Django REST API, бизнес-логика, роли, заказы, платежи, карты, документы, уведомления.
+- **Web-кабинет** - административная панель для оператора, администратора и бухгалтера.
+- **Mobile app** - Flutter-приложение для родителя и водителя.
 
-| Слой | Технология |
-|---|---|
-| Backend | Django 5 + DRF, JWT (SimpleJWT), Channels (WS), Celery |
-| DB | PostgreSQL (в dev можно SQLite) |
-| Realtime | Redis + Django Channels (live-трекинг водителя) |
-| Карта | `MapProvider` порт → `MockMapProvider` / `TwoGisProvider` (пробки) |
-| Платежи | `PaymentProvider` порт → Mock / Stripe test Checkout / Halyk, далее ioka/Kaspi |
-| Web | Next.js 14 + Tailwind (кабинет Admin/Operator/Accountant) — ✅ готов |
-| Mobile | Flutter (Parent + Driver) — ✅ готов |
+Текущие production/demo адреса:
 
-## Структура
+- API: `https://kidstransfer-api.onrender.com/api`
+- Кабинет: `https://taxikids.vercel.app`
+- Android APK: собирается из папки `mobile/`
+- GitHub: `b1rzhaan/taxikids`
 
-```
+Подробное клиентское описание проекта в PDF находится здесь:
+
+- `docs/Detskoe_taxi_full_project_description_ru.pdf`
+- `docs/PROJECT_OVERVIEW.md`
+
+---
+
+## 1. Что уже есть в проекте
+
+### Роли пользователей
+
+В системе реализована ролевая модель:
+
+- **Родитель** - заказывает поездки, добавляет детей, оплачивает поездки, отслеживает маршрут, пишет в поддержку.
+- **Водитель** - принимает доступные заказы, выполняет поездку, меняет статусы, видит заработок и профиль.
+- **Оператор** - работает с ежедневными заказами, водителями, родителями, сообщениями и уведомлениями.
+- **Администратор** - имеет полный доступ к управлению системой.
+- **Бухгалтер** - работает с платежами, выплатами, доходами, расходами и отчетами.
+
+### Родительское приложение
+
+В приложении родителя уже реализовано:
+
+- регистрация и авторизация;
+- профиль родителя с возможностью загрузки фото;
+- добавление детей с фото;
+- отображение детей на главной странице;
+- выбор одного или нескольких детей при создании поездки;
+- выбор точки посадки и назначения на карте;
+- reverse geocoding - вместо "точка на карте" показывается реальный адрес;
+- расчет маршрута, расстояния, времени и стоимости;
+- учет пробок через 2GIS;
+- оформление заказа;
+- история поездок;
+- экран текущей поездки;
+- отображение маршрута на карте;
+- детский аватар/фото на точке посадки;
+- карточка водителя и автомобиля;
+- кошелек;
+- пополнение кошелька через платежный провайдер;
+- история транзакций;
+- сообщения/поддержка;
+- AI-помощник поддержки через Groq API;
+- SOS/экстренное обращение;
+- уведомления;
+- светлый дизайн в стиле Yandex Go / Uber / Bolt с желтым акцентом.
+
+### Приложение водителя
+
+В приложении водителя уже реализовано:
+
+- регистрация и авторизация;
+- профиль водителя;
+- загрузка фото водителя;
+- загрузка документов водителя;
+- информация об автомобиле;
+- отображение фото водителя на главном экране;
+- статус "на линии";
+- список доступных заказов;
+- принятие заказа;
+- текущие поездки;
+- карточка заказа с детьми, адресами, суммой и статусом оплаты;
+- навигатор к ребенку;
+- навигатор до точки назначения;
+- маршрут на карте;
+- отображение пробок;
+- переключатель показа пробок;
+- голосовая озвучка навигации;
+- отключение озвучки;
+- заработок водителя;
+- запрос выплаты;
+- история поездок;
+- поддержка и сообщения.
+
+### Web-кабинет
+
+В веб-кабинете реализованы разделы для разных ролей:
+
+#### Администратор
+
+- Dashboard.
+- Общая статистика.
+- Активные заказы.
+- Доходы.
+- Новые пользователи.
+- Онлайн-водители.
+- Заказы.
+- Карта поездок.
+- Водители.
+- Родители.
+- Автомобили.
+- Платежи.
+- Выплаты.
+- Тарифы.
+- Промокоды.
+- Отзывы.
+- Уведомления.
+- Настройки системы.
+- Роли и сотрудники.
+- Профиль.
+
+Администратор может управлять пользователями, водителями, родителями, автомобилями, заказами, документами, платежами и выплатами.
+
+#### Оператор
+
+- Dashboard.
+- Заказы.
+- Новые заказы.
+- Активные заказы.
+- Архив.
+- Карта поездок.
+- Водители.
+- Онлайн/офлайн водители.
+- Свободные водители.
+- Назначение водителя.
+- Родители.
+- Сообщения.
+- Чат.
+- Уведомления.
+- История.
+
+Оператору доступна ежедневная операционная работа: контроль заказов, связь с клиентами, водителями и обработка сообщений.
+
+#### Бухгалтер
+
+- Dashboard.
+- Платежи.
+- Онлайн-платежи.
+- Наличные платежи.
+- Возвраты.
+- Выплаты.
+- Зарплаты водителей.
+- Ожидающие выплаты.
+- Оплаченные выплаты.
+- Финансовые отчеты.
+- Доходы.
+- Расходы.
+- Банковские операции.
+- Акты / документы.
+- Экспорт в Excel/PDF.
+
+### Карты и маршруты
+
+В проекте подключена архитектура карт через `MapProvider`.
+
+Сейчас используется:
+
+- 2GIS API для маршрутов;
+- 2GIS geocoder / reverse geocoder;
+- подсказки адресов;
+- маршруты с учетом пробок;
+- расчет времени, расстояния и стоимости;
+- карта в мобильном приложении;
+- карта поездок в веб-кабинете;
+- отображение активных маршрутов;
+- отображение маршрута не прямой линией, а по реальной геометрии дороги;
+- отдельный режим навигации водителя.
+
+### Платежи
+
+Платежная архитектура сделана через `PaymentProvider`, чтобы можно было менять провайдера без переписывания всей системы.
+
+Сейчас есть:
+
+- mock-платежи для разработки;
+- Stripe test/demo mode;
+- Stripe Checkout;
+- Stripe webhook;
+- переменные `STRIPE_SECRET_KEY` и `STRIPE_WEBHOOK_SECRET`;
+- валюта и demo-конвертация через env;
+- кошелек родителя;
+- пополнение кошелька;
+- история транзакций;
+- выплаты водителям;
+- запрос выплаты;
+- бухгалтерский раздел выплат.
+
+Для production в Казахстане позже можно подключить:
+
+- Halyk;
+- ioka;
+- Kaspi Pay;
+- CloudPayments;
+- Kassa24.
+
+Эти провайдеры обычно требуют договор, merchant onboarding и production credentials. Кодовая архитектура уже подготовлена под подключение через новый адаптер.
+
+### Ядро заказов
+
+Заказы построены вокруг state machine поездки.
+
+Основная логика:
+
+- создание заказа родителем;
+- расчет маршрута и цены;
+- оплата;
+- появление заказа у водителей;
+- принятие заказа водителем;
+- движение к ребенку;
+- прибытие к ребенку;
+- ребенок в машине;
+- поездка до точки назначения;
+- завершение поездки;
+- начисление водителю;
+- история статусов;
+- рейтинг и отзыв.
+
+Пример статусов:
+
+- `created`
+- `waiting_payment`
+- `paid`
+- `driver_assigned`
+- `driver_on_way`
+- `driver_arrived`
+- `child_picked_up`
+- `in_progress`
+- `child_delivered`
+- `completed`
+- `cancelled`
+
+---
+
+## 2. Что находится в PDF
+
+PDF `docs/Detskoe_taxi_full_project_description_ru.pdf` содержит клиентское описание проекта:
+
+- что представляет собой сервис;
+- какие роли есть в системе;
+- как работает приложение родителя;
+- как работает приложение водителя;
+- как работает веб-кабинет;
+- как устроены заказы;
+- как работает карта и маршруты;
+- как используются 2GIS и пробки;
+- как устроены платежи;
+- почему Stripe используется в demo/test режиме;
+- какие банковские провайдеры можно подключить позже;
+- что уже сделано;
+- что находится в работе;
+- какие улучшения планируются дальше.
+
+README дополняет PDF технической информацией по структуре файлов, запуску, сборке и ответственности папок.
+
+---
+
+## 3. Технологический стек
+
+| Часть | Технологии |
+| --- | --- |
+| Backend | Python, Django 5, Django REST Framework |
+| Auth | JWT, SimpleJWT, role-based access |
+| Realtime | Django Channels, WebSocket, Redis |
+| Background jobs | Celery |
+| Database | PostgreSQL в production/Docker, SQLite для локальной разработки |
+| Maps | 2GIS API, MapProvider, OpenStreetMap/Leaflet/flutter_map |
+| Payments | PaymentProvider, Mock, Stripe test/demo, Halyk adapter |
+| Web | Next.js 14, React, TypeScript, Tailwind CSS, SWR |
+| Mobile | Flutter, Dart, Dio, Provider, flutter_map, WebView, image_picker |
+| Deploy | Render для API, Vercel для web |
+| Docs | Markdown, PDF |
+
+---
+
+## 4. Структура проекта
+
+```text
 taxi/
-├── backend/            Django API
-│   ├── kidstransfer/   project (settings, urls, asgi, celery)
-│   └── apps/
-│       ├── accounts    User + роли + JWT + RBAC
-│       ├── children    дети (CRUD родителя)
-│       ├── drivers     водители, машины, тарифы, схемы зарплат
-│       ├── trips       заказы, СТЕЙТ-МАШИНА, история, локации, WS, регулярные планы
-│       ├── maps        MapProvider (mock + 2GIS), geocode/route/estimate
-│       ├── payments    PaymentProvider (mock/Stripe/Halyk), create + webhook + идемпотентность
-│       ├── wallet      кошелёк, транзакции, абонементы
-│       ├── payouts     начисления водителям, выплаты, отчёты
-│       ├── notifications уведомления, FCM-токены, SOS
-│       └── statistics  дашборд, выручка, эффективность водителей
-├── web/                Next.js (скоро)
-├── mobile/             Flutter (скоро)
-└── docker-compose.yml  backend + Postgres + Redis
+  backend/             Django backend API
+  web/                 Next.js web cabinet
+  mobile/              Flutter mobile app
+  docs/                Documentation and PDF files
+  docker-compose.yml   Local infrastructure
+  render.yaml          Render deploy config
+  DEPLOY.md            Deployment notes
+  README.md            Main project documentation
+  .env.example         Example environment variables
 ```
 
-## Запуск через Docker (рекомендуется)
+---
 
-Нужен установленный **Docker Desktop**.
+## 5. Backend
 
-```bash
-cp .env.example .env      # при необходимости впишите TWOGIS_API_KEY
-docker compose up --build
+Папка:
+
+```text
+backend/
 ```
 
-Поднимутся Postgres, Redis и backend. Backend сам применит миграции и засеет
-демо-данные. Открыть:
+Отвечает за:
 
-- API docs (Swagger): http://localhost:8000/api/docs/
-- Django admin: http://localhost:8000/admin/
+- REST API;
+- авторизацию;
+- роли;
+- бизнес-логику;
+- работу с базой данных;
+- платежи;
+- карты;
+- заказы;
+- документы;
+- уведомления;
+- выплаты;
+- статистику;
+- медиа-файлы.
 
-## Запуск локально без Docker (SQLite)
+Основные файлы:
+
+```text
+backend/manage.py
+```
+
+Точка входа Django CLI: миграции, запуск сервера, создание superuser, seed demo.
+
+```text
+backend/requirements.txt
+```
+
+Python-зависимости проекта.
+
+```text
+backend/smoke_test.py
+```
+
+Сквозной тест основного сценария.
+
+```text
+backend/kidstransfer/
+```
+
+Django project:
+
+- `settings.py` - настройки проекта;
+- `urls.py` - корневые URL;
+- `asgi.py` - ASGI/WebSocket;
+- `wsgi.py` - WSGI;
+- `celery.py` - Celery tasks.
+
+### Backend apps
+
+```text
+backend/apps/accounts/
+```
+
+Пользователи, роли, авторизация, JWT, профили, адреса, доступы.
+
+```text
+backend/apps/children/
+```
+
+Дети родителя: имя, школа, класс, фото, комментарии, привязка к родителю.
+
+```text
+backend/apps/drivers/
+```
+
+Водители, автомобили, документы, фото, водительское удостоверение, паспорт/ID, онлайн-статус, рейтинг, стаж.
+
+```text
+backend/apps/trips/
+```
+
+Заказы, статусы поездки, история, назначение водителя, GPS-локации, рейтинг, текущая поездка.
+
+```text
+backend/apps/maps/
+```
+
+Работа с картами:
+
+- geocode;
+- reverse geocode;
+- suggest;
+- route;
+- estimate;
+- 2GIS adapter;
+- mock adapter.
+
+```text
+backend/apps/payments/
+```
+
+Платежи:
+
+- Stripe;
+- Halyk adapter;
+- mock provider;
+- создание платежа;
+- webhook;
+- подтверждение оплаты;
+- refund-логика.
+
+```text
+backend/apps/wallet/
+```
+
+Кошелек родителя:
+
+- баланс;
+- пополнения;
+- списания;
+- история транзакций;
+- абонементы.
+
+```text
+backend/apps/payouts/
+```
+
+Выплаты водителям:
+
+- начисления;
+- заявки на вывод;
+- подтверждение бухгалтером;
+- история выплат;
+- отчеты.
+
+```text
+backend/apps/notifications/
+```
+
+Уведомления, SOS, support messages, AI-помощник.
+
+```text
+backend/apps/statistics/
+```
+
+Dashboard, статистика по заказам, доходам, водителям и пользователям.
+
+```text
+backend/media/
+```
+
+Загруженные изображения и документы:
+
+- фото водителей;
+- фото детей;
+- фото автомобилей;
+- документы.
+
+```text
+backend/staticfiles/
+```
+
+Собранные static-файлы Django.
+
+---
+
+## 6. Web-кабинет
+
+Папка:
+
+```text
+web/
+```
+
+Отвечает за веб-кабинет для:
+
+- администратора;
+- оператора;
+- бухгалтера.
+
+Основные папки:
+
+```text
+web/src/app/
+```
+
+Страницы Next.js App Router.
+
+```text
+web/src/components/
+```
+
+Переиспользуемые UI-компоненты: карточки, таблицы, формы, layout, sidebar, modal, map components.
+
+```text
+web/src/lib/
+```
+
+API client, helpers, types, форматирование данных.
+
+Основные возможности web:
+
+- role-based sidebar;
+- dashboard;
+- список заказов;
+- карточка заказа;
+- карта поездок;
+- список водителей;
+- профиль водителя;
+- редактирование водителя;
+- загрузка фото и документов водителя;
+- автомобили;
+- фото автомобиля;
+- родители;
+- платежи;
+- выплаты;
+- тарифы;
+- промокоды;
+- отзывы;
+- уведомления;
+- сообщения;
+- настройки;
+- сотрудники и роли;
+- финансовые отчеты;
+- экспорт.
+
+---
+
+## 7. Mobile app
+
+Папка:
+
+```text
+mobile/
+```
+
+Это Flutter-приложение для Android.
+
+Основные папки:
+
+```text
+mobile/lib/main.dart
+```
+
+Точка входа приложения.
+
+```text
+mobile/lib/core/
+```
+
+Глобальная инфраструктура:
+
+- `config.dart` - API URL и WS URL;
+- `api_client.dart` - Dio client, JWT, refresh token, ошибки;
+- `theme.dart` - визуальная тема приложения.
+
+```text
+mobile/lib/features/auth/
+```
+
+Login/register экраны для родителя и водителя.
+
+```text
+mobile/lib/features/parent/
+```
+
+Экраны родителя:
+
+- главная;
+- дети;
+- добавление ребенка;
+- создание поездки;
+- выбор точки на карте;
+- поездки;
+- кошелек;
+- оплата;
+- профиль;
+- сообщения;
+- поддержка;
+- трекинг поездки.
+
+```text
+mobile/lib/features/driver/
+```
+
+Экраны водителя:
+
+- главная;
+- доступные заказы;
+- текущие заказы;
+- карточка заказа;
+- навигатор;
+- заработок;
+- профиль;
+- загрузка фото;
+- поддержка.
+
+```text
+mobile/lib/features/shared/
+```
+
+Общие экраны и элементы для родителя/водителя.
+
+```text
+mobile/lib/services/
+```
+
+Сервисы, которые вызывают backend API.
+
+```text
+mobile/lib/models/
+```
+
+Data models приложения.
+
+```text
+mobile/lib/state/
+```
+
+State management, auth state.
+
+```text
+mobile/lib/widgets/
+```
+
+Переиспользуемые Flutter widgets:
+
+- navbar;
+- cards;
+- map widgets;
+- avatars;
+- buttons;
+- sheets;
+- trip widgets.
+
+```text
+mobile/assets/
+```
+
+Изображения приложения:
+
+- логотип;
+- машина;
+- баннеры;
+- carousel images;
+- иконки/визуальные ассеты.
+
+---
+
+## 8. Документация
+
+Папка:
+
+```text
+docs/
+```
+
+Содержит:
+
+```text
+docs/PROJECT_OVERVIEW.md
+```
+
+Расширенное техническое и бизнес-описание проекта.
+
+```text
+docs/Detskoe_taxi_full_project_description_ru.pdf
+```
+
+PDF для клиента с полным описанием проекта.
+
+---
+
+## 9. Environment variables
+
+Основной пример:
+
+```text
+.env.example
+```
+
+Важные переменные:
+
+```env
+DATABASE_URL=
+DJANGO_SECRET_KEY=
+DJANGO_DEBUG=
+DJANGO_ALLOWED_HOSTS=
+CORS_ALLOW_ALL=
+
+MAP_PROVIDER=twogis
+TWOGIS_API_KEY=
+
+PAYMENT_PROVIDER=stripe
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_CURRENCY=usd
+STRIPE_DEMO_KZT_TO_TARGET_RATE=500
+DEFAULT_CURRENCY=KZT
+
+GROQ_API_KEY=
+GROQ_MODEL=
+```
+
+### Для чего нужны ключи
+
+`TWOGIS_API_KEY` - маршруты, адреса, geocoder, reverse geocoder, пробки.
+
+`STRIPE_SECRET_KEY` - создание тестовых Stripe Checkout платежей.
+
+`STRIPE_WEBHOOK_SECRET` - проверка webhook от Stripe.
+
+`GROQ_API_KEY` - AI-помощник в поддержке.
+
+`PAYMENT_PROVIDER` - выбор платежного провайдера.
+
+`MAP_PROVIDER` - выбор картографического провайдера.
+
+---
+
+## 10. Локальный запуск
+
+### Backend
 
 ```bash
 cd backend
-python -m venv .venv && ./.venv/Scripts/activate      # Windows
+python -m venv .venv
+.\.venv\Scripts\activate
 pip install -r requirements.txt
-export USE_SQLITE=1                                    # PowerShell: $env:USE_SQLITE=1
 python manage.py migrate
-python manage.py seed_demo
 python manage.py runserver
 ```
 
-## Web-кабинет (Next.js)
+Swagger/API docs:
+
+```text
+http://localhost:8000/api/docs/
+```
+
+### Web
 
 ```bash
 cd web
-cp .env.local.example .env.local     # NEXT_PUBLIC_API_BASE=http://localhost:8000/api
 npm install
-npm run dev                          # http://localhost:3000
+npm run dev
 ```
-Логин теми же demo-доступами (роли operator/admin/accountant). Карта поездок —
-на Leaflet + OpenStreetMap (без ключа). Страницы: дашборд «Панель владельца»,
-заказы + назначение водителя, карта активных поездок, водители, платежи, выплаты.
 
-## Flutter-приложение (Parent + Driver)
+Локальный адрес:
+
+```text
+http://localhost:3000
+```
+
+### Mobile
 
 ```bash
 cd mobile
 flutter pub get
-flutter run                # Android-эмулятор (API → 10.0.2.2:8000) или устройство
-# или в браузере:
-flutter run -d chrome      # API → localhost:8000
+flutter run
 ```
-Один вход разводит по роли: `parent@kids.kz` → кабинет родителя (дети, заказ с
-картой, оплата, live-трекинг, кошелёк), `driver@kids.kz` → кабинет водителя
-(назначенные заказы, смена статусов, симуляция GPS по маршруту). Карта — на
-`flutter_map` + OpenStreetMap (без ключа), маршрут рисуется из реального 2GIS.
-Базовый URL API настраивается в `lib/core/config.dart`.
 
-## Демо-логины (пароли)
-
-| Роль | Email | Пароль |
-|---|---|---|
-| Admin | admin@kids.kz | admin12345 |
-| Operator | operator@kids.kz | operator12345 |
-| Accountant | accountant@kids.kz | accountant12345 |
-| Driver | driver@kids.kz | driver12345 |
-| Parent | parent@kids.kz | parent12345 |
-
-## Проверка сквозного сценария
+Production APK:
 
 ```bash
-cd backend && USE_SQLITE=1 DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,testserver \
-  python smoke_test.py
+cd mobile
+flutter build apk --release --dart-define=API_BASE=https://kidstransfer-api.onrender.com/api --dart-define=WS_BASE=wss://kidstransfer-api.onrender.com
 ```
-Прогонит: логин → расчёт маршрута с пробками → создание заказа → оплата (mock
-webhook; Stripe test включается env-переменной) → назначение водителя → все статусы поездки → начисление водителю →
-дашборд бухгалтера.
 
-## Ключевые эндпоинты
+Готовый APK появляется здесь:
 
-- `POST /api/auth/login/`, `POST /api/auth/register/`, `GET /api/auth/me/`
-- `GET/POST /api/children/`
-- `POST /api/maps/estimate/` — маршрут + пробки + цена
-- `GET/POST /api/trips/`, `POST /api/trips/{id}/status/`, `/assign/`, `/cancel/`, `/location/`
-- `WS /ws/trips/{id}/?token=<jwt>` — live-трекинг
-- `POST /api/payments/create/`, `POST /api/payments/webhook/{provider}/`
-- `GET /api/wallet/`, `POST /api/wallet/topup/`, `/wallet/subscriptions/buy/`
-- `GET /api/payouts/`, `POST /api/payouts/`, `/payouts/{id}/mark-paid/`
-- `GET /api/statistics/dashboard/`
+```text
+mobile/build/app/outputs/flutter-apk/app-release.apk
+```
 
-## Замена провайдеров
+---
 
-- Карта: `MAP_PROVIDER=twogis` + `TWOGIS_API_KEY=...` в `.env`
-- Платежи для демо: `PAYMENT_PROVIDER=stripe`, `STRIPE_SECRET_KEY=sk_test_...`,
-  `STRIPE_WEBHOOK_SECRET=whsec_...` (Stripe Checkout test cards, например `4242 4242 4242 4242`)
-- Платежи для продакшена в Казахстане: Halyk/ioka/Kaspi/CloudPayments/Kassa24 как
-  отдельный адаптер после договора и production credentials
+## 11. Docker
+
+Для локального запуска инфраструктуры:
+
+```bash
+docker compose up --build
+```
+
+Или через helper:
+
+```text
+start-docker.bat
+```
+
+Остановить:
+
+```text
+stop-docker.bat
+```
+
+Docker поднимает:
+
+- backend;
+- PostgreSQL;
+- Redis;
+- web;
+- миграции/seed при необходимости.
+
+---
+
+## 12. Demo accounts
+
+| Роль | Email | Пароль |
+| --- | --- | --- |
+| Admin | `admin@kids.kz` | `admin12345` |
+| Operator | `operator@kids.kz` | `operator12345` |
+| Accountant | `accountant@kids.kz` | `accountant12345` |
+| Parent | `parent@kids.kz` | `parent12345` |
+| Driver | `driver@kids.kz` | `driver12345` |
+
+---
+
+## 13. Как работает основной сценарий
+
+1. Родитель входит в приложение.
+2. Добавляет ребенка или выбирает уже добавленного ребенка.
+3. Выбирает точку посадки на карте.
+4. Выбирает точку назначения.
+5. Backend через 2GIS получает реальные адреса и маршрут.
+6. Система считает расстояние, время, пробки и цену.
+7. Родитель создает заказ.
+8. Заказ переходит в оплату.
+9. После оплаты заказ становится доступен водителям.
+10. Водитель принимает заказ.
+11. Водитель едет к ребенку.
+12. Родитель видит статус и маршрут.
+13. Водитель отмечает прибытие.
+14. Ребенок садится в машину.
+15. Водитель едет к точке назначения.
+16. Поездка завершается.
+17. Система начисляет заработок водителю.
+18. Родитель может поставить оценку.
+19. Оператор/админ видят поездку в кабинете.
+20. Бухгалтер видит платежи и выплаты.
+
+---
+
+## 14. Что сейчас еще можно улучшать
+
+Текущая версия уже подходит для demo/MVP, но для production желательно доработать:
+
+- production договор с банком/эквайером;
+- production ключи Halyk/ioka/Kaspi/CloudPayments;
+- release signing для Android APK;
+- real push notifications через FCM;
+- полноценный WebSocket live-tracking вместо частого polling там, где он еще используется;
+- native 2GIS Mobile SDK для полного turn-by-turn навигатора;
+- более детальную систему документов водителей;
+- модерацию водителей и автомобилей;
+- историю чатов с оператором;
+- SLA/очередь поддержки;
+- роли сотрудников с тонкими правами;
+- полноценные Excel/PDF отчеты;
+- аудит действий сотрудников;
+- безопасность production media storage;
+- backup базы данных;
+- мониторинг ошибок и логов.
+
+---
+
+## 15. Что планируется дальше
+
+### Продуктовые улучшения
+
+- регулярные поездки по расписанию;
+- несколько детей в одном заказе;
+- групповые маршруты;
+- сохраненные адреса;
+- любимые маршруты;
+- промокоды и акции;
+- подписки/абонементы;
+- расширенный чат родитель-оператор-водитель;
+- AI-помощник до подключения оператора;
+- рейтинг водителей и отзывы;
+- более глубокая карточка ребенка;
+- контроль документов и сроков действия.
+
+### Админка
+
+- расширенное управление родителями;
+- расширенное управление водителями;
+- редактирование фото и документов;
+- редактирование автомобиля и фото автомобиля;
+- блокировка пользователей;
+- назначение ролей сотрудникам;
+- история действий;
+- финансовая аналитика;
+- выгрузка отчетов;
+- настройки тарифов и зон.
+
+### Карты
+
+- слой пробок во всех relevant экранах;
+- единый 2GIS стиль во всех картах;
+- улучшенная навигация водителя;
+- хранение фактической траектории поездки;
+- сравнение планового и фактического маршрута.
+
+### Платежи
+
+- production Halyk;
+- ioka;
+- Kaspi Pay;
+- CloudPayments/Kassa24;
+- возвраты;
+- чеки;
+- бухгалтерские документы;
+- automatic payout reconciliation.
+
+---
+
+## 16. Проверка качества
+
+Команды проверки:
+
+```bash
+cd backend
+python -m compileall apps
+```
+
+```bash
+cd web
+npm run build
+```
+
+```bash
+cd mobile
+flutter analyze
+flutter build apk --release --dart-define=API_BASE=https://kidstransfer-api.onrender.com/api --dart-define=WS_BASE=wss://kidstransfer-api.onrender.com
+```
+
+Последняя проверка mobile:
+
+- `flutter analyze` - без ошибок;
+- `flutter build apk --release` - успешно;
+- APK собран для клиентской демонстрации.
+
+---
+
+## 17. Важные замечания для клиента
+
+- Stripe сейчас используется только для test/demo оплаты.
+- Для реальных платежей в Казахстане нужен договор с платежным провайдером.
+- Архитектура платежей уже подготовлена: после договора меняется/добавляется provider, а не переписывается вся система.
+- 2GIS уже используется для маршрутов, адресов и пробок.
+- Для полного production-навигатора уровня Yandex Go желательно подключить native 2GIS Mobile SDK с отдельным ключом.
+- APK для клиента можно отправлять как demo build.
+- Для публикации в Google Play нужен production signing key.
+
+---
+
+## 18. Краткое резюме
+
+`Детское такси` - это не просто экранный прототип, а рабочая MVP-система:
+
+- есть backend;
+- есть web-кабинет;
+- есть мобильное приложение;
+- есть роли;
+- есть заказы;
+- есть карта;
+- есть реальные маршруты;
+- есть пробки;
+- есть платежная архитектура;
+- есть кошелек;
+- есть выплаты;
+- есть документы;
+- есть поддержка;
+- есть AI-помощник;
+- есть PDF-документация;
+- есть сборка APK.
+
+Проект можно показывать клиенту как demo/MVP, а дальше доводить до production через подключение банковского провайдера, production signing, push-уведомления, расширенную поддержку и финальную настройку инфраструктуры.

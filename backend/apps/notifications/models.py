@@ -72,3 +72,71 @@ class EmergencyRequest(models.Model):
     class Meta:
         db_table = "emergency_requests"
         ordering = ["-created_at"]
+
+
+class SupportThread(models.Model):
+    class Status(models.TextChoices):
+        OPEN = "open", "Открыт"
+        IN_PROGRESS = "in_progress", "В работе"
+        RESOLVED = "resolved", "Решен"
+
+    participant = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="support_threads"
+    )
+    trip = models.ForeignKey(
+        "trips.Trip",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="support_threads",
+    )
+    assigned_to = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_support_threads",
+    )
+    subject = models.CharField(max_length=160, blank=True)
+    status = models.CharField(
+        max_length=16, choices=Status.choices, default=Status.OPEN
+    )
+    last_message_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "support_threads"
+        ordering = ["-last_message_at", "-created_at"]
+
+    def __str__(self) -> str:
+        return self.subject or f"Support #{self.pk}"
+
+
+class SupportMessage(models.Model):
+    class SenderRole(models.TextChoices):
+        PARENT = "parent", "Родитель"
+        DRIVER = "driver", "Водитель"
+        OPERATOR = "operator", "Оператор"
+        ADMIN = "admin", "Администратор"
+        ACCOUNTANT = "accountant", "Бухгалтер"
+        AI = "ai", "AI"
+        SYSTEM = "system", "Система"
+
+    thread = models.ForeignKey(
+        SupportThread, on_delete=models.CASCADE, related_name="messages"
+    )
+    sender = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="support_messages",
+    )
+    sender_role = models.CharField(max_length=16, choices=SenderRole.choices)
+    body = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "support_messages"
+        ordering = ["created_at"]
