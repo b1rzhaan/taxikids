@@ -338,6 +338,24 @@ function DriverEditCard({
         if (file) form.set(key, file);
       });
       await api.upload(`/drivers/${driver.id}/`, form);
+      const vehicle = driver.vehicles?.[0];
+      const vehiclePhoto = files.vehicle_photo;
+      if (vehicle && vehiclePhoto) {
+        const vehicleForm = new FormData();
+        vehicleForm.set("make", vehicle.make);
+        vehicleForm.set("model", vehicle.model);
+        vehicleForm.set("plate_number", vehicle.plate_number);
+        vehicleForm.set("color", vehicle.color ?? "");
+        vehicleForm.set("seats", String(vehicle.seats ?? 4));
+        if (vehicle.year) vehicleForm.set("year", String(vehicle.year));
+        if (vehicle.mileage_km) {
+          vehicleForm.set("mileage_km", String(vehicle.mileage_km));
+        }
+        vehicleForm.set("tech_passport", vehicle.tech_passport ?? "");
+        vehicleForm.set("is_active", vehicle.is_active === false ? "false" : "true");
+        vehicleForm.set("photo", vehiclePhoto);
+        await api.upload(`/vehicles/${vehicle.id}/`, vehicleForm);
+      }
       onSaved();
     } finally {
       setSaving(false);
@@ -393,6 +411,7 @@ function DriverEditCard({
         <UploadButton label="Фото водителя" name="photo" setFiles={setFiles} />
         <UploadButton label="Вод. удостоверение" name="license_photo" setFiles={setFiles} />
         <UploadButton label="Удостоверение личности" name="id_card_photo" setFiles={setFiles} />
+        <UploadButton label="Фото автомобиля" name="vehicle_photo" setFiles={setFiles} />
       </div>
       <button className="btn-brand w-full" disabled={saving} onClick={save}>
         {saving ? "Сохранение..." : "Сохранить"}

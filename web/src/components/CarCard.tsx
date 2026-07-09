@@ -67,7 +67,16 @@ export default function CarCard({
     <div className="rounded-2xl bg-ink text-white p-5 shadow-soft">
       <div className="grid md:grid-cols-[1.1fr_1fr] gap-5 items-center">
         <div className="rounded-xl bg-white/5 p-4">
-          <CarSide color={hex} />
+          {vehicle.photo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={vehicle.photo}
+              alt={`${vehicle.make} ${vehicle.model}`}
+              className="h-[160px] w-full rounded-xl object-cover border border-white/10 bg-white/5"
+            />
+          ) : (
+            <CarSide color={hex} />
+          )}
           <div className="mt-2 flex items-center justify-between">
             <div className="font-bold">
               {vehicle.make} {vehicle.model}

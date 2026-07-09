@@ -166,10 +166,16 @@ class DriverViewSet(viewsets.ModelViewSet):
     search_fields = ["full_name", "phone", "iin"]
 
     def get_permissions(self):
-        # Operators view drivers and review applications; only admin edits records.
+        # Admins and operators can maintain driver cards and documents from the
+        # operations cabinet. Salary schemes and tariffs stay admin-only below.
         if self.action in ("list", "retrieve", "stats"):
             return [IsStaffRole()]
-        if self.action in ("approve_docs", "reject_docs"):
+        if self.action in (
+            "approve_docs",
+            "reject_docs",
+            "update",
+            "partial_update",
+        ):
             return [IsAdminOrOperator()]
         return [IsAdmin()]
 
