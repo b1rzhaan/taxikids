@@ -116,9 +116,9 @@ class NavigationItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = active ? Colors.white : AppColors.muted;
-    return InkWell(
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      borderRadius: BorderRadius.circular(28),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
         child: AnimatedContainer(
