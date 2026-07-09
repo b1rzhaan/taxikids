@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme.dart';
@@ -24,13 +25,37 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
   List<Child> _children = [];
   List<Trip> _trips = [];
   bool _loading = true;
+  final _carouselController = PageController();
+  Timer? _carouselTimer;
+  int _carouselIndex = 0;
 
   static const _terminal = {'completed', 'cancelled'};
+  static const _carouselAssets = [
+    'assets/proverennye.png',
+    'assets/uvedomlenya.png',
+    'assets/otsleshka.png',
+  ];
 
   @override
   void initState() {
     super.initState();
     _load();
+    _carouselTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (!mounted || !_carouselController.hasClients) return;
+      final next = (_carouselIndex + 1) % _carouselAssets.length;
+      _carouselController.animateToPage(
+        next,
+        duration: const Duration(milliseconds: 520),
+        curve: Curves.easeOutCubic,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _carouselTimer?.cancel();
+    _carouselController.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -87,7 +112,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                     const SizedBox(height: 18),
                     _entry(_hero(activeCount: active.length), 1),
                     const SizedBox(height: 14),
-                    _entry(_insightStrip(active.length, today.length), 2),
+                    _entry(_promoCarousel(), 2),
                     const SizedBox(height: 22),
                     if (active.isNotEmpty) ...[
                       _entry(const SectionHeader('Текущая поездка'), 3),
@@ -426,102 +451,90 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
     );
   }
 
-  Widget _insightStrip(int activeCount, int todayCount) {
-    final childrenCount = _children.length;
+  Widget _promoCarousel() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      height: 168,
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.line),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: Row(
+      child: Stack(
         children: [
-          Expanded(
-            child: _railItem(
-              Icons.child_care_outlined,
-              '$childrenCount',
-              'детей',
-              AppColors.brand,
+          ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: PageView.builder(
+              controller: _carouselController,
+              itemCount: _carouselAssets.length,
+              onPageChanged: (i) => setState(() => _carouselIndex = i),
+              itemBuilder: (_, i) {
+                return AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 360),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  child: Image.asset(
+                    _carouselAssets[i],
+                    key: ValueKey(_carouselAssets[i]),
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity,
+                  ),
+                );
+              },
             ),
           ),
-          _railDivider(),
-          Expanded(
-            child: _railItem(
-              Icons.route_outlined,
-              '$todayCount',
-              'сегодня',
-              const Color(0xFF4C8DFF),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              height: 56,
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.vertical(
+                  bottom: Radius.circular(24),
+                ),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.18),
+                  ],
+                ),
+              ),
             ),
           ),
-          _railDivider(),
-          Expanded(
-            child: _railItem(
-              Icons.shield_outlined,
-              activeCount > 0 ? '$activeCount' : '24/7',
-              activeCount > 0 ? 'активно' : 'связь',
-              AppColors.success,
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 12,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(_carouselAssets.length, (i) {
+                final active = i == _carouselIndex;
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 240),
+                  curve: Curves.easeOut,
+                  width: active ? 22 : 7,
+                  height: 7,
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  decoration: BoxDecoration(
+                    color: active
+                        ? AppColors.brand
+                        : Colors.white.withValues(alpha: 0.72),
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                );
+              }),
             ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _railItem(IconData icon, String value, String label, Color color) {
-    return Row(
-      children: [
-        Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: color, size: 18),
-        ),
-        const SizedBox(width: 9),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                  height: 1.0,
-                ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: AppColors.muted, fontSize: 11),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _railDivider() {
-    return Container(
-      width: 1,
-      height: 34,
-      margin: const EdgeInsets.symmetric(horizontal: 10),
-      color: AppColors.line,
     );
   }
 

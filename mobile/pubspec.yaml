@@ -38,6 +38,9 @@ flutter:
   assets:
     - assets/logo.png
     - assets/car.png
+    - assets/proverennye.png
+    - assets/uvedomlenya.png
+    - assets/otsleshka.png
 
 # Run: flutter pub run flutter_launcher_icons
 # Replace assets/logo.png with your own image, then re-run the command above.
