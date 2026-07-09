@@ -1,9 +1,15 @@
 import type { Session } from "./types";
 
-const API_BASE =
+const RAW_API_BASE =
   process.env.NEXT_PUBLIC_API_BASE ||
   "https://kidstransfer-api.onrender.com/api";
+const API_BASE = normalizeApiBase(RAW_API_BASE);
 const STORAGE_KEY = "kt_session";
+
+function normalizeApiBase(value: string) {
+  const base = value.replace(/\/+$/, "");
+  return base.endsWith("/api") ? base : `${base}/api`;
+}
 
 export function getSession(): Session | null {
   if (typeof window === "undefined") return null;
