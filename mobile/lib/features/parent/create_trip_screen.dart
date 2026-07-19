@@ -306,31 +306,17 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
               Text(_error!, style: const TextStyle(color: AppColors.danger)),
             ],
             const SizedBox(height: 14),
-            SizedBox(
-              height: 56,
-              child: ElevatedButton(
-                onPressed: (ready && _estimate != null && !_submitting)
-                    ? _submit
-                    : null,
-                child: _submitting
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.onBrand,
-                        ),
-                      )
-                    : Text(
-                        _estimate != null
-                            ? selectedCount > 1
-                                  ? 'Заказать для $selectedCount детей'
-                                  : 'Заказать'
-                            : ready
-                            ? 'Рассчитываем…'
-                            : 'Укажите маршрут',
-                      ),
-              ),
+            _SlideOrderButton(
+              enabled: ready && _estimate != null && !_submitting,
+              loading: _submitting,
+              label: _estimate != null
+                  ? selectedCount > 1
+                        ? 'Заказать для $selectedCount детей'
+                        : 'Заказать поездку'
+                  : ready
+                  ? 'Рассчитываем маршрут'
+                  : 'Укажите маршрут',
+              onComplete: _submit,
             ),
           ],
         ),
@@ -536,4 +522,200 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
       ),
     ),
   );
+}
+
+class _SlideOrderButton extends StatefulWidget {
+  final bool enabled;
+  final bool loading;
+  final String label;
+  final Future<void> Function() onComplete;
+
+  const _SlideOrderButton({
+    required this.enabled,
+    required this.loading,
+    required this.label,
+    required this.onComplete,
+  });
+
+  @override
+  State<_SlideOrderButton> createState() => _SlideOrderButtonState();
+}
+
+class _SlideOrderButtonState extends State<_SlideOrderButton> {
+  double _drag = 0;
+  bool _triggered = false;
+
+  @override
+  void didUpdateWidget(covariant _SlideOrderButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.loading && !widget.loading) _reset();
+    if (!widget.enabled && _drag != 0) _reset();
+  }
+
+  void _reset() {
+    if (!mounted) return;
+    setState(() {
+      _drag = 0;
+      _triggered = false;
+    });
+  }
+
+  Future<void> _complete(double maxDrag) async {
+    if (_triggered || !widget.enabled || widget.loading) return;
+    setState(() {
+      _drag = maxDrag;
+      _triggered = true;
+    });
+    await widget.onComplete();
+    if (mounted) _reset();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const height = 62.0;
+    const knob = 50.0;
+    final active = widget.enabled && !widget.loading;
+    final bgColor = active ? AppColors.ink : AppColors.surface2;
+    final textColor = active ? Colors.white : AppColors.muted;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxDrag = (constraints.maxWidth - knob - 12).clamp(0.0, 600.0);
+        final progress = maxDrag == 0 ? 0.0 : (_drag / maxDrag).clamp(0.0, 1.0);
+
+        return GestureDetector(
+          onHorizontalDragUpdate: active
+              ? (details) {
+                  setState(() {
+                    _drag = (_drag + details.delta.dx).clamp(0.0, maxDrag);
+                  });
+                }
+              : null,
+          onHorizontalDragEnd: active
+              ? (_) {
+                  if (progress >= 0.72) {
+                    _complete(maxDrag);
+                  } else {
+                    _reset();
+                  }
+                }
+              : null,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOut,
+            height: height,
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: active
+                  ? [
+                      BoxShadow(
+                        color: AppColors.ink.withValues(alpha: 0.16),
+                        blurRadius: 18,
+                        offset: const Offset(0, 10),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Positioned.fill(
+                  child: AnimatedOpacity(
+                    opacity: active ? 1 : 0.65,
+                    duration: const Duration(milliseconds: 180),
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 72, right: 64),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 180),
+                          child: Text(
+                            widget.loading ? 'Создаем заказ...' : widget.label,
+                            key: ValueKey('${widget.loading}-${widget.label}'),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: textColor,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  right: 18,
+                  child: _ChevronTrail(enabled: active, progress: progress),
+                ),
+                AnimatedPositioned(
+                  duration: const Duration(milliseconds: 120),
+                  curve: Curves.easeOut,
+                  left: 6 + _drag,
+                  child: Container(
+                    height: knob,
+                    width: knob,
+                    decoration: BoxDecoration(
+                      color: AppColors.brand,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.brand.withValues(alpha: 0.36),
+                          blurRadius: 18,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: widget.loading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.onBrand,
+                              ),
+                            )
+                          : const Icon(
+                              Icons.local_taxi_rounded,
+                              color: AppColors.onBrand,
+                              size: 24,
+                            ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ChevronTrail extends StatelessWidget {
+  final bool enabled;
+  final double progress;
+
+  const _ChevronTrail({required this.enabled, required this.progress});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(3, (index) {
+        final opacity = enabled ? (0.32 + index * 0.18 + progress * 0.3) : 0.22;
+        return Padding(
+          padding: const EdgeInsets.only(left: 1),
+          child: Icon(
+            Icons.chevron_right_rounded,
+            size: 24,
+            color: Colors.white.withValues(alpha: opacity.clamp(0.0, 1.0)),
+          ),
+        );
+      }),
+    );
+  }
 }
